@@ -1,0 +1,2966 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xyOps Monitoring Agent · Status &amp; Roadmap</title>
+<link rel="stylesheet" id="hljs-theme" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css">
+<style>
+:root {
+  --bg: #070b18;
+  --bg-2: #0c1226;
+  --card: rgba(17, 24, 49, 0.78);
+  --card-solid: #111831;
+  --border: rgba(148, 163, 255, 0.14);
+  --border-strong: rgba(148, 163, 255, 0.28);
+  --text: #e6e9f5;
+  --muted: #9aa3c7;
+  --faint: #6b7399;
+  --accent: #7c5cff;
+  --accent-2: #00d4ff;
+  --accent-3: #ff5ca8;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+  --info: #38bdf8;
+  --code-bg: #0a0f1f;
+  --inline-code: rgba(124, 92, 255, 0.16);
+  --shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.6);
+  --radius: 18px;
+  --sidebar: 300px;
+}
+html[data-theme="light"] {
+  --bg: #f5f7fc;
+  --bg-2: #eef1fa;
+  --card: rgba(255, 255, 255, 0.92);
+  --card-solid: #ffffff;
+  --border: rgba(30, 41, 90, 0.10);
+  --border-strong: rgba(30, 41, 90, 0.20);
+  --text: #141a33;
+  --muted: #4b5578;
+  --faint: #7a82a3;
+  --code-bg: #f6f8fc;
+  --inline-code: rgba(124, 92, 255, 0.10);
+  --shadow: 0 18px 50px -24px rgba(30, 41, 90, 0.35);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  margin: 0;
+  font-family: "Segoe UI Variable", "Segoe UI", Inter, system-ui, -apple-system, Roboto, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(124, 92, 255, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(0, 212, 255, 0.12), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+a { color: var(--accent-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+html[data-theme="light"] a { color: #4f46e5; }
+
+/* progress */
+#progress {
+  position: fixed; inset: 0 auto auto 0; height: 3px; width: 0; z-index: 50;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
+}
+
+/* hero */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 64px 48px 44px;
+  border-bottom: 1px solid var(--border);
+}
+.hero::before {
+  content: ""; position: absolute; inset: -40%;
+  background:
+    conic-gradient(from 180deg at 50% 50%, rgba(124, 92, 255, 0.25), rgba(0, 212, 255, 0.18), rgba(255, 92, 168, 0.18), rgba(124, 92, 255, 0.25));
+  filter: blur(90px); opacity: 0.55; animation: drift 24s linear infinite;
+}
+html[data-theme="light"] .hero::before { opacity: 0.35; }
+@keyframes drift { to { transform: rotate(360deg); } }
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 255, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 30% 40%, black 30%, transparent 75%);
+}
+.hero-inner { position: relative; max-width: 1280px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; gap: 10px; align-items: center;
+  font: 600 12px/1 "Cascadia Code", Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent-2); padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 999px;
+  background: rgba(0, 212, 255, 0.06);
+}
+.eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+#hero-title {
+  margin: 18px 0 10px; font-size: clamp(30px, 4.2vw, 52px); line-height: 1.08; letter-spacing: -0.02em; font-weight: 750;
+  background: linear-gradient(92deg, #fff 0%, #c9c1ff 40%, #7fe7ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html[data-theme="light"] #hero-title { background: linear-gradient(92deg, #141a33 0%, #4f46e5 55%, #0891b2 100%); -webkit-background-clip: text; background-clip: text; }
+#hero-sub { max-width: 900px; color: var(--muted); font-size: 16.5px; margin: 0; }
+#hero-sub p { margin: 6px 0; }
+#hero-sub strong { color: var(--text); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-top: 30px; }
+.stat {
+  position: relative; padding: 16px 18px; border-radius: 16px;
+  background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(12px);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.stat::after { content: ""; position: absolute; inset: auto -30% -60% auto; width: 140px; height: 140px; border-radius: 50%; background: var(--glow, var(--accent)); opacity: 0.18; filter: blur(28px); }
+.stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-weight: 600; }
+.stat .value { font-size: 34px; font-weight: 750; letter-spacing: -0.02em; margin-top: 2px; }
+.stat .hint { font-size: 12.5px; color: var(--muted); }
+.stat.ok { --glow: var(--ok); } .stat.ok .value { color: var(--ok); }
+.stat.warn { --glow: var(--warn); } .stat.warn .value { color: var(--warn); }
+.stat.bad { --glow: var(--bad); } .stat.bad .value { color: var(--bad); }
+.stat.info { --glow: var(--accent-2); } .stat.info .value { color: var(--accent-2); }
+
+.meter { margin-top: 18px; height: 10px; border-radius: 999px; overflow: hidden; display: flex; background: rgba(148, 163, 255, 0.12); border: 1px solid var(--border); }
+.meter span { display: block; height: 100%; transition: width 1.2s cubic-bezier(.2,.8,.2,1); width: 0; }
+.meter .ok { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.meter .warn { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.meter .bad { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.meter-legend { display: flex; gap: 18px; margin-top: 8px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+.meter-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+.toolbar { position: absolute; top: 18px; right: 22px; display: flex; gap: 8px; z-index: 2; }
+.btn {
+  appearance: none; border: 1px solid var(--border-strong); background: var(--card); color: var(--text);
+  padding: 8px 12px; border-radius: 10px; cursor: pointer; font: 600 13px/1 inherit; backdrop-filter: blur(10px);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.btn:hover { transform: translateY(-1px); border-color: var(--accent); }
+
+/* layout */
+.layout { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); gap: 32px; max-width: 1480px; margin: 0 auto; padding: 32px 32px 80px; }
+aside {
+  position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto;
+  padding: 16px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--border);
+  backdrop-filter: blur(12px); box-shadow: var(--shadow);
+}
+aside::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, pre::-webkit-scrollbar { width: 8px; height: 8px; }
+aside::-webkit-scrollbar-thumb, .table-wrap::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+#toc-filter {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-strong);
+  background: var(--bg-2); color: var(--text); font: inherit; font-size: 13.5px; outline: none; margin-bottom: 12px;
+}
+#toc-filter:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.2); }
+#toc { font-size: 13.5px; }
+#toc a { display: block; color: var(--muted); padding: 5px 10px; border-radius: 8px; border-left: 2px solid transparent; line-height: 1.35; }
+#toc a:hover { color: var(--text); background: rgba(124, 92, 255, 0.08); text-decoration: none; }
+#toc a.active { color: var(--text); background: linear-gradient(90deg, rgba(124, 92, 255, 0.22), transparent); border-left-color: var(--accent); }
+#toc .h2 { font-weight: 650; margin-top: 4px; }
+#toc .group { margin-left: 12px; display: none; border-left: 1px dashed var(--border-strong); padding-left: 4px; }
+#toc .group.open, #toc.filtering .group { display: block; }
+#toc .h3 { font-size: 12.8px; }
+#toc .hidden { display: none; }
+
+/* content */
+main { min-width: 0; }
+section.card {
+  position: relative; margin: 0 0 28px; padding: 30px 34px; border-radius: var(--radius);
+  background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); backdrop-filter: blur(12px);
+  opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease;
+}
+section.card.visible { opacity: 1; transform: none; }
+section.card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), transparent 80%); opacity: .8;
+}
+h2 { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; font-size: 26px; letter-spacing: -0.015em; line-height: 1.2; }
+h2 .num {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; font-size: 17px; font-weight: 750;
+  color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 22px -8px rgba(124, 92, 255, 0.8);
+}
+h3 { margin: 34px 0 12px; font-size: 19.5px; padding-left: 12px; border-left: 3px solid var(--accent-2); line-height: 1.3; }
+h4 { margin: 26px 0 10px; font-size: 16.5px; color: var(--text); }
+h4::before { content: "▸ "; color: var(--accent); }
+p, li { color: var(--text); }
+li { margin: 4px 0; }
+li::marker { color: var(--accent); }
+strong { color: var(--text); }
+em { color: var(--muted); }
+hr { display: none; }
+:not(pre) > code {
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, monospace; font-size: .86em;
+  font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0;
+  padding: .12em .42em; border-radius: 6px; background: var(--inline-code); border: 1px solid var(--border);
+}
+a > code { color: inherit; }
+
+/* contents grid */
+section.contents ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; counter-reset: c; }
+section.contents li { counter-increment: c; margin: 0; }
+section.contents li a {
+  display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--bg-2); color: var(--text); transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+section.contents li a::before {
+  content: counter(c); flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px;
+  font-weight: 700; font-size: 13px; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+section.contents li a:hover { transform: translateY(-2px); border-color: var(--accent); text-decoration: none; }
+
+/* tables */
+.table-wrap { overflow-x: auto; margin: 16px 0 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-2); }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+thead th {
+  position: sticky; top: 0; text-align: left; font-weight: 650; font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); padding: 12px 14px; background: linear-gradient(180deg, rgba(124, 92, 255, 0.14), rgba(124, 92, 255, 0.06));
+  border-bottom: 1px solid var(--border-strong); white-space: nowrap;
+}
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) td { background: rgba(148, 163, 255, 0.035); }
+tbody tr:hover td { background: rgba(0, 212, 255, 0.06); }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 650;
+  white-space: nowrap; border: 1px solid; line-height: 1.5;
+}
+.pill.ok { color: var(--ok); background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.35); }
+.pill.warn { color: var(--warn); background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
+.pill.bad { color: var(--bad); background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); }
+.pill code { background: transparent; border: 0; padding: 0; }
+tr.row-ok td:first-child { box-shadow: inset 3px 0 0 var(--ok); }
+tr.row-warn td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+tr.row-bad td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+
+/* callouts */
+blockquote {
+  margin: 18px 0; padding: 14px 18px 14px 50px; border-radius: 14px; position: relative;
+  background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); color: var(--text);
+}
+blockquote::before { content: "ℹ"; position: absolute; left: 16px; top: 13px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--info); color: #04111d; font-weight: 800; font-size: 13px; }
+blockquote.warn { background: rgba(245, 158, 11, 0.09); border-color: rgba(245, 158, 11, 0.35); }
+blockquote.warn::before { content: "!"; background: var(--warn); }
+blockquote.proposed { background: rgba(124, 92, 255, 0.10); border-color: rgba(124, 92, 255, 0.40); }
+blockquote.proposed::before { content: "✎"; background: var(--accent); color: #fff; }
+blockquote p { margin: 4px 0; }
+
+/* code */
+.code-block { position: relative; margin: 16px 0 22px; border-radius: 14px; border: 1px solid var(--border); background: var(--code-bg); overflow: hidden; }
+.code-head {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(148, 163, 255, 0.08), transparent); font-size: 12px; color: var(--muted);
+}
+.code-head .dots { display: flex; gap: 6px; }
+.code-head .dots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+.code-head .dots i:nth-child(1) { background: #ff5f57; } .code-head .dots i:nth-child(2) { background: #febc2e; } .code-head .dots i:nth-child(3) { background: #28c840; }
+.code-head .lang { font: 700 11px/1 "Cascadia Code", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: rgba(124, 92, 255, 0.18); color: var(--text); }
+.code-head .lines { color: var(--faint); }
+.code-head .spacer { flex: 1; }
+.code-head button { appearance: none; border: 1px solid var(--border-strong); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 9px; font: 600 12px/1 inherit; cursor: pointer; }
+.code-head button:hover { color: var(--text); border-color: var(--accent); }
+pre { margin: 0; overflow: auto; }
+pre code.hljs, pre code {
+  display: block; padding: 16px 18px !important; background: transparent !important;
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, monospace; font-size: 13.2px; line-height: 1.6; tab-size: 4;
+  font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0;
+}
+.code-block.collapsed pre { max-height: 460px; }
+.code-block.collapsed::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; pointer-events: none;
+  background: linear-gradient(transparent, var(--code-bg));
+}
+
+/* mermaid */
+.diagram {
+  position: relative; margin: 18px 0 24px; padding: 22px; border-radius: 16px; border: 1px solid var(--border);
+  background:
+    radial-gradient(600px 200px at 50% 0%, rgba(124, 92, 255, 0.10), transparent 70%),
+    var(--bg-2);
+  overflow-x: auto; text-align: center;
+}
+.diagram .mermaid { display: inline-block; min-width: 60%; }
+.diagram .mermaid svg { max-width: 100%; height: auto; }
+.diagram .expand { position: absolute; top: 10px; right: 10px; }
+.diagram .tag { position: absolute; top: 12px; left: 14px; font: 700 11px/1 "Cascadia Code", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); opacity: .8; }
+.overlay { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; background: rgba(3, 6, 15, 0.85); backdrop-filter: blur(6px); padding: 32px; }
+.overlay.open { display: grid; }
+.overlay .frame { max-width: 96vw; max-height: 92vh; overflow: auto; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 18px; padding: 24px; }
+.overlay .frame svg { max-width: none !important; min-width: min(1400px, 90vw); height: auto; }
+.overlay .close { position: fixed; top: 18px; right: 22px; }
+
+#top { position: fixed; right: 22px; bottom: 22px; z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+#top.show { opacity: 1; pointer-events: auto; }
+
+footer { text-align: center; color: var(--faint); font-size: 12.5px; padding: 0 0 40px; }
+
+.fallback { padding: 18px; border-radius: 14px; border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08); margin-bottom: 18px; }
+pre.raw { white-space: pre-wrap; padding: 18px; background: var(--code-bg); border-radius: 14px; border: 1px solid var(--border); }
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; padding: 20px 16px 60px; }
+  aside { position: relative; top: 0; max-height: none; }
+  .hero { padding: 56px 20px 32px; }
+  section.card { padding: 22px 18px; }
+}
+@media print {
+  body { background: #fff; color: #000; }
+  .hero::before, .hero-grid, aside, .toolbar, #top, #progress, .code-head button, .diagram .expand { display: none !important; }
+  .layout { display: block; padding: 0; }
+  section.card { box-shadow: none; border: 1px solid #ccc; opacity: 1 !important; transform: none !important; break-inside: avoid-page; }
+  .code-block.collapsed pre { max-height: none; }
+  .code-block.collapsed::after { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="hero">
+  <div class="hero-grid"></div>
+  <div class="toolbar">
+    <button class="btn" id="expand-all" title="Expand all code blocks">Expand code</button>
+    <button class="btn" id="print" title="Print / save as PDF">Print</button>
+    <button class="btn" id="theme" title="Toggle theme">☀ Light</button>
+  </div>
+  <div class="hero-inner">
+    <span class="eyebrow"><span class="dot"></span>agentIngest · feat/agent_integration · 2026-09-28</span>
+    <h1 id="hero-title">xyOps Monitoring Agent</h1>
+    <div id="hero-sub"></div>
+    <div class="stats" id="stats"></div>
+    <div class="meter" id="meter"><span class="ok"></span><span class="warn"></span><span class="bad"></span></div>
+    <div class="meter-legend" id="meter-legend"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <input id="toc-filter" type="search" placeholder="Filter sections…" autocomplete="off">
+    <nav id="toc"></nav>
+  </aside>
+  <main id="content"></main>
+</div>
+
+<footer>Generated from <a href="agent-ingest-status-and-roadmap.md">agent-ingest-status-and-roadmap.md</a> · xyOps Monitoring · IT-EX Automation</footer>
+
+<button class="btn" id="top" title="Back to top">↑ Top</button>
+<div class="overlay" id="overlay"><button class="btn close" id="overlay-close">✕ Close</button><div class="frame" id="overlay-frame"></div></div>
+
+<script type="text/markdown" id="md"># xyOps Monitoring Agent: Implementation Status and Roadmap
+
+> Branch `feat/agent_integration`, current as of **2026-09-28**.
+> Covers the `agentIngest` service end to end: the problem statement, how the system flows, the Python code that is already in place, what Aditya asked for in the review meeting, what was verified, and exactly what still has to be built (with the file, function and code for each change).
+
+---
+
+## Contents
+
+1. [Problem statement](#1-problem-statement)
+2. [Repository layout](#2-repository-layout)
+3. [Architecture and entry points](#3-architecture-and-entry-points)
+4. [End-to-end flow, step by step, with code](#4-end-to-end-flow-step-by-step-with-code)
+5. [Data model and state machines](#5-data-model-and-state-machines)
+6. [Configuration reference](#6-configuration-reference)
+7. [Security controls in place](#7-security-controls-in-place)
+8. [Requirements from the review meeting (Aditya)](#8-requirements-from-the-review-meeting-aditya)
+9. [Status matrix: implemented vs pending](#9-status-matrix-implemented-vs-pending)
+10. [End-to-end verification results](#10-end-to-end-verification-results)
+11. [What still needs to be done, with code](#11-what-still-needs-to-be-done-with-code)
+12. [Target flow after the changes](#12-target-flow-after-the-changes)
+13. [Delivery plan, acceptance criteria, risks, open questions](#13-delivery-plan-acceptance-criteria-risks-open-questions)
+14. [Appendix: running, testing, baseline data](#14-appendix-running-testing-baseline-data)
+
+---
+
+## 1. Problem statement
+
+The IT-EX Automation team runs many unattended automations on the **xyOps** platform: FAR, CMPP, SCANNING FAR, VPN STANDARD, primeonboarding, Server Workstation Prestage and others. Each one processes ServiceNow tickets (TASK/RITM/INC…).
+
+Before this work:
+
+- **Failures were found late.** Someone had to open xyOps and read logs to notice that tickets were stuck.
+- **When alerting existed, it was noisy.** A job failing every 15 minutes produced dozens of identical emails, and a well-known, harmless error (for example FAR's network-share *access denied*) looked exactly like a real outage.
+- **Nobody could answer "how many tickets did we process, and how many failed, per application?"** without manual work.
+- **Severity was judged by wording alone.** An LLM reading a log flags anything that *sounds* bad as severe, whatever its real impact on that particular service.
+
+**Goal:** an agent that:
+
+1. receives every finished xyOps job,
+2. reads its log,
+3. decides deterministically where it can and with an LLM where it must, whether a developer has to act now,
+4. emails only when something *new* or *worse* happens,
+5. records every decision so the results can be measured and tuned,
+6. and feeds a per-application ticket dashboard.
+
+**Accuracy target set by Aditya:** above 95% correct notify/suppress decisions, reached through a *hybrid* approach (deterministic rules + LLM with good context), not the LLM alone.
+
+---
+
+## 2. Repository layout
+
+```
+xyops-monitoring/
+├── agentIngest/                 ← THE service described in this document (port 8090)
+│   ├── app.py                   FastAPI: POST /ingest webhook + dashboard read APIs
+│   ├── service.py               Façade: config, log fetch, SSRF guard, store wrappers
+│   ├── store.py                 SQLite persistence: jobs, incidents, event_state, ticket SQL
+│   ├── agent/
+│   │   ├── config.py            All agent settings (env-driven)
+│   │   ├── runner.py            Orchestration: claim → fetch → analyse → notify → complete
+│   │   ├── logtext.py           Deterministic log scan + excerpting
+│   │   ├── triage.py            Prompt, LLM verdict, safety rules, fingerprint
+│   │   ├── llm.py               Portkey → Azure OpenAI client, JSON extraction
+│   │   └── notifier.py          Alert decision, email rendering, event_state updates
+│   ├── data/jobs.db             SQLite (WAL mode)
+│   └── tools/sync_db.py         (untracked) merge a jobs.db copy into the live DB
+├── emailClient/                 agent-mail-service client (bearer token, retries)
+├── frontend/                    React + Vite + TS dashboard (port 5173)
+│   ├── vite.config.ts           Dev proxy; adds X-Ingest-Token server-side
+│   └── src/pages/Tickets.tsx    Per-application ticket dashboard
+├── backend/                     OLDER separate pipeline (port 8060, SQLAlchemy, APScheduler)
+└── docs/                        This document + architecture / walkthrough HTML
+```
+
+> `backend/` is a separate, earlier system: it collects log files, runs its own scheduled agent, keeps its own database, and serves the Overview/Runs/Incidents/Rules pages. It **does not share data** with `agentIngest`. Everything below is about `agentIngest` unless stated otherwise.
+
+---
+
+## 3. Architecture and entry points
+
+```mermaid
+flowchart LR
+  subgraph xyOps
+    J[Automation job<br/>FAR / CMPP / ...]
+  end
+  subgraph agentIngest [agentIngest :8090]
+    A[app.py<br/>POST /ingest]
+    R[agent/runner.py]
+    T[agent/triage.py]
+    L[agent/llm.py]
+    N[agent/notifier.py]
+    S[(store.py<br/>jobs.db)]
+    Q[app.py<br/>GET /api/tickets*]
+  end
+  subgraph External
+    P[Portkey gateway]
+    Z[Azure OpenAI]
+    M[agent-mail-service]
+  end
+  subgraph Browser
+    V[Vite :5173<br/>proxy + token]
+    UI[Tickets.tsx]
+  end
+
+  J -- webhook --> A
+  A --> S
+  A -- background task --> R
+  R -- stream log --> J
+  R --> T --> L
+  L --> P
+  L -. fallback .-> Z
+  R --> N --> M
+  N --> S
+  UI --> V --> Q --> S
+```
+
+### Entry points
+
+| # | Entry point | Started by | File / function | Purpose |
+|---|---|---|---|---|
+| 1 | `POST /ingest` | xyOps webhook on job completion | [app.py](../agentIngest/app.py) `ingest()` | **Main real-time path** |
+| 2 | Recovery sweep thread | App startup (`lifespan`), every `AGENT_RECOVERY_INTERVAL_SECONDS` (300s) | [runner.py](../agentIngest/agent/runner.py) `start_recovery()` → `run_cycle()` | Retries logs that were not ready, orphaned leases, and jobs released after errors |
+| 3 | CLI | `python -m agentIngest.agent.runner [--loop] [--interval N]` | `runner.main()` | Same batch processing as #2, run as its own process |
+| 4 | `GET /api/tickets/stats`, `GET /api/tickets` | Dashboard via the Vite proxy | [app.py](../agentIngest/app.py) | Read-only ticket reporting |
+| 5 | `GET /health` | Monitoring / smoke tests | [app.py](../agentIngest/app.py) | Liveness check |
+| 6 | Frontend | `npm run dev` | `main.tsx` → `App.tsx` → `Tickets.tsx` | UI |
+| 7 | Legacy backend | `uvicorn` in `backend/` | [backend/app/main.py](../backend/app/main.py) | Separate older pipeline (Overview/Runs/Incidents/Rules pages) |
+
+---
+
+## 4. End-to-end flow, step by step, with code
+
+### Sequence overview
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant X as xyOps
+  participant A as app.ingest
+  participant SV as service / store
+  participant R as runner
+  participant T as triage
+  participant LLM as llm (Portkey→Azure)
+  participant N as notifier
+  participant M as mail service
+
+  X->>A: POST /ingest (X-Ingest-Token, JSON)
+  A->>A: require_token (compare_digest)
+  A->>SV: record_job → INSERT … ON CONFLICT DO NOTHING
+  alt duplicate job_id
+    A-->>X: 202 {duplicate:true}
+  else new
+    A-->>X: 202 {duplicate:false}
+    A->>R: background: process_now(job_id)
+    R->>SV: claim_job (atomic UPDATE WHERE unprocessed)
+    R->>SV: fetch_log (rewrite, allowlist, stream, retry)
+    SV->>X: GET log_url (stream)
+    R->>SV: event_state(event_id)
+    R->>T: analyse(job, text, previous=state)
+    T->>T: logtext.scan → clean-run shortcut?
+    T->>LLM: complete_json(SYSTEM_PROMPT, build_prompt)
+    LLM-->>T: JSON verdict | None
+    T->>T: fallback_verdict if None, _clean safety rules, _fingerprint
+    R->>N: notify(job, verdict, fingerprint, state)
+    N->>SV: record_incident
+    N->>N: worth_notifying? _alert_decision?
+    opt should alert
+      N->>M: send_email (bearer, retries)
+    end
+    N->>SV: close_incident(status, reason) + mark_event_failing/healthy
+    R->>SV: complete_job → processed
+  end
+```
+
+---
+
+### 4.1 Webhook intake ([app.py](../agentIngest/app.py))
+
+**What it does:** authenticates the call, validates the JSON, stores the job (a repeated webhook for the same job is ignored) and returns **202 immediately**, so xyOps never waits for the analysis.
+
+```python
+TOKEN = os.getenv("INGEST_TOKEN", "").strip()
+ALLOW_INSECURE = os.getenv("INGEST_ALLOW_INSECURE", "").strip().lower() in ("1", "true", "yes")
+
+if not TOKEN and not ALLOW_INSECURE:
+    raise RuntimeError("INGEST_TOKEN is not set (or set INGEST_ALLOW_INSECURE=true for local testing)")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if agent_config.ENABLED:
+        runner.start_recovery()
+    else:
+        log.warning("AGENT_ENABLED is false: logs are downloaded but never analysed")
+    yield
+    runner.stop_recovery()
+
+
+def handle_job(job_id: str) -> None:
+    """The pipeline, run after the response is sent so xyOps is never kept waiting."""
+    if agent_config.ENABLED:
+        runner.process_now(job_id)
+
+
+def require_token(x_ingest_token: Optional[str] = Header(default=None)) -> None:
+    if not TOKEN:
+        return
+    if not x_ingest_token or not secrets.compare_digest(x_ingest_token, TOKEN):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid or missing X-Ingest-Token")
+
+
+@app.post("/ingest", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(require_token)])
+async def ingest(request: Request, background: BackgroundTasks) -> dict[str, Any]:
+    """Receive one xyOps job web hook. Idempotent on job id."""
+    raw = await request.body()
+    try:
+        payload = json.loads(raw)
+    except Exception as exc:
+        log.warning("rejected non-JSON body (%d bytes): %r", len(raw), raw[:800])
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"body is not valid JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        log.warning("rejected non-object body: %r", str(payload)[:200])
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "body must be a JSON object")
+
+    try:
+        fields, is_new = service.record_job(payload)
+    except ValueError as exc:
+        log.warning("no job id in payload: %r", str(payload)[:200])
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+
+    job_id = fields["job_id"]
+    if not is_new:
+        log.info("duplicate job=%s ignored", job_id)
+        return {"received": True, "job_id": job_id, "duplicate": True, "log_queued": False}
+
+    log.info("job=%s event=%s code=%s", job_id, fields.get("event_id"), fields.get("code"))
+
+    background.add_task(handle_job, job_id)
+
+    return {
+        "received": True,
+        "job_id": job_id,
+        "duplicate": False,
+        "log_queued": bool(fields.get("log_url")),
+    }
+```
+
+**Key Python concepts:**
+- a FastAPI **dependency** (`Depends(require_token)`);
+- `secrets.compare_digest`, which compares in constant time so the token can't be guessed through timing differences;
+- `BackgroundTasks`, which runs work after the response is sent;
+- `asynccontextmanager` **lifespan**, which starts and stops the recovery thread with the app.
+
+---
+
+### 4.2 Field extraction and duplicate check #1 ([service.py](../agentIngest/service.py), [store.py](../agentIngest/store.py))
+
+xyOps can send either a flat or a nested payload, so each field is looked up along several possible paths:
+
+```python
+FIELD_PATHS: dict[str, tuple[str, ...]] = {
+    "job_id": ("job_id", "job.id", "id"),
+    "event_id": ("event_id", "event.id"),
+    "event_title": ("event_title", "event.title"),
+    "code": ("code", "job.code"),
+    "description": ("description", "job.description"),
+    "server": ("server", "nice_server", "server.id"),
+    "started": ("started", "job.started"),
+    "completed": ("completed", "job.completed"),
+    "elapsed": ("elapsed", "job.elapsed"),
+    "log_url": ("log_url", "links.job_log", "job_log"),
+}
+
+
+def extract_fields(payload: dict[str, Any]) -> dict[str, Optional[str]]:
+    """Pull indexed fields from a web hook payload (flat or nested shape)."""
+    return {name: dig(payload, *paths) for name, paths in FIELD_PATHS.items()}
+
+
+def record_job(payload: dict[str, Any]) -> tuple[dict[str, Optional[str]], bool]:
+    """Store a received job. Returns (fields, is_new). is_new False means duplicate."""
+    fields = extract_fields(payload)
+    if not fields.get("job_id"):
+        raise ValueError("payload contains no job id")
+    return fields, store.record(fields, payload)
+
+
+def dig(payload: dict[str, Any], *paths: str) -> Optional[str]:
+    """First non-empty scalar found at any of the dot-paths."""
+    for path in paths:
+        value: Any = payload
+        for part in path.split("."):
+            if not isinstance(value, dict):
+                value = None
+                break
+            value = value.get(part)
+        if value not in (None, "") and not isinstance(value, (dict, list)):
+            return str(value)
+    return None
+```
+
+`store.record` inserts with `ON CONFLICT(job_id) DO NOTHING`. `cur.rowcount` then tells whether the row is new, which is **duplicate check #1** (same `job_id`):
+
+```python
+def record(self, fields: dict[str, Any], payload: dict[str, Any]) -> bool:
+    """Insert a newly received job. Returns False if job_id was already known."""
+    with self._connect() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO jobs
+                (job_id, event_id, event_title, code, description, server,
+                 started, completed, elapsed, log_url, payload, received_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(job_id) DO NOTHING
+            """,
+            (...),
+        )
+    return bool(cur.rowcount)
+```
+
+Every connection is opened with WAL mode and a busy timeout, so the webhook thread and the recovery thread can use the database at the same time:
+
+```python
+@contextmanager
+def _connect(self) -> Iterator[sqlite3.Connection]:
+    conn = sqlite3.connect(self.db_path, timeout=30, isolation_level=None)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=30000")
+    try:
+        yield conn
+    finally:
+        conn.close()
+```
+
+Columns added after the first release are migrated in `Store.__init__` (SQLite has no `ADD COLUMN IF NOT EXISTS`):
+
+```python
+_ADDED_COLUMNS = {
+    "jobs": {
+        "log_attempts": "INTEGER NOT NULL DEFAULT 0",
+        "log_started_at": "REAL",
+    },
+    "event_state": {
+        "last_summary": "TEXT",
+        "last_root_cause": "TEXT",
+    },
+}
+...
+for table, columns in _ADDED_COLUMNS.items():
+    existing = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+    for column, spec in columns.items():
+        if column not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {spec}")
+```
+
+---
+
+### 4.3 Claim with a lease: duplicate check #2 ([store.py](../agentIngest/store.py) `claim_job`)
+
+If two copies of the webhook arrive at the same moment, the atomic `UPDATE … WHERE status='unprocessed'` lets exactly one of them win. The lease (`LEASE_SECONDS`, 300s) means a crashed worker's job gets picked up again later.
+
+```python
+def claim_job(self, job_id, *, lease_seconds=300, worker=None, require_log=False):
+    """Flip one job to `processing`. None when it is already in flight or done.
+
+    The UPDATE ... WHERE status = 'unprocessed' is the dedup: concurrent web
+    hook deliveries race here and exactly one wins.
+    """
+    now = time.time()
+    clause = "job_id = ? AND (status = ? OR (status = ? AND lease_expires_at < ?))"
+    params: list[Any] = [PROCESSING, now, now + lease_seconds, worker, job_id,
+                         UNPROCESSED, PROCESSING, now]
+    ...
+    with self._connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            cur = conn.execute(
+                f"""
+                UPDATE jobs
+                   SET status = ?, attempts = attempts + 1, processing_at = ?,
+                       lease_expires_at = ?, worker = ?
+                 WHERE {clause}
+                """,
+                params,
+            )
+            row = (conn.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+                   if cur.rowcount else None)
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+    return _row(row) if row else None
+```
+
+A failed attempt either returns the job to the queue or marks it permanently `failed` once `MAX_ATTEMPTS` (5) is reached:
+
+```python
+def fail(self, job_id: str, error: Optional[str], max_attempts: int) -> Optional[dict[str, Any]]:
+    with self._connect() as conn:
+        row = conn.execute("SELECT attempts FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+        if row is None:
+            return None
+        status = FAILED if row["attempts"] >= max_attempts else UNPROCESSED
+        conn.execute(
+            "UPDATE jobs SET status = ?, last_error = ?, lease_expires_at = NULL WHERE job_id = ?",
+            (status, error, job_id),
+        )
+```
+
+---
+
+### 4.4 Log fetch: SSRF guard, rewrite, streaming, retry ([service.py](../agentIngest/service.py))
+
+```python
+def _origin(url: str) -> Optional[tuple[str, str, int]]:
+    """Scheme, host and port. Compared as a tuple so `10.9.44.17.evil.com`
+    cannot pass as a prefix of `10.9.44.17`."""
+    try:
+        parts = urlsplit(url)
+        host, port = parts.hostname, parts.port
+    except ValueError:
+        return None
+    if not parts.scheme or not host:
+        return None
+    return parts.scheme.lower(), host.lower(), port or (443 if parts.scheme == "https" else 80)
+
+
+def rewrite_log_url(log_url: str) -> str:
+    """xyOps builds log_url from its own base_url, which in Kubernetes is often
+    an in-pod address like http://localhost:5522. Swap it for a routable one."""
+    ...
+
+
+def _stream(log_url: str) -> str:
+    """Read the log straight into memory, stopping at MAX_LOG_BYTES."""
+    import requests
+
+    chunks: list[bytes] = []
+    total = 0
+    with requests.get(log_url, stream=True, timeout=(10, 120)) as response:
+        response.raise_for_status()
+        for chunk in response.iter_content(1 << 16):
+            if not chunk:
+                continue
+            chunks.append(chunk)
+            total += len(chunk)
+            if total >= MAX_LOG_BYTES:
+                log.info("log truncated at %d bytes", total)
+                break
+    return b"".join(chunks).decode("utf-8", errors="replace")
+
+
+def fetch_log(job_id: str, log_url: str) -> tuple[str, Optional[str]]:
+    """Stream a job log into memory. Returns (text, error); text is "" on failure.
+
+    An empty response counts as a failure and is retried, since xyOps often has
+    not flushed the log by the time the web hook fires.
+    """
+    fetch_url = rewrite_log_url(log_url)
+    if fetch_url != log_url:
+        log.info("rewrote log_url origin for %s -> %s", job_id, fetch_url[:120])
+
+    if ALLOWED_ORIGINS and _origin(fetch_url) not in ALLOWED_ORIGINS:
+        error = "log_url outside allowed origin"
+        log.warning("refusing log_url outside XYOPS_BASE_URL: %r", fetch_url[:120])
+        store.finish_fetch(job_id, error=error)
+        return "", error
+
+    store.begin_fetch(job_id)
+    last_error = "fetch did not run"
+
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        try:
+            text = _stream(fetch_url)
+            if len(text) >= MIN_LOG_BYTES:
+                store.finish_fetch(job_id, size=len(text))
+                log.info("streamed log for %s (%d bytes)", job_id, len(text))
+                return text, None
+            last_error = f"log was empty ({len(text)} bytes)"
+        except Exception as exc:
+            last_error = str(exc)[:500]
+        log.warning("log fetch %d/%d failed for %s: %s", attempt, DOWNLOAD_ATTEMPTS, job_id, last_error)
+        if attempt < DOWNLOAD_ATTEMPTS:
+            time.sleep(RETRY_DELAY_SECONDS * attempt)
+
+    store.finish_fetch(job_id, error=last_error)
+    return "", last_error
+```
+
+**Key points:**
+- Logs are **never written to disk**, and memory is bounded by `LOG_MAX_BYTES` (8 MiB).
+- The allowlist compares scheme, host and port together, so prefix tricks like `10.9.44.17.evil.com` are rejected.
+- The retry delay grows with each attempt (`RETRY_DELAY_SECONDS * attempt`).
+
+---
+
+### 4.5 Orchestration ([runner.py](../agentIngest/agent/runner.py))
+
+```python
+def process_job(job: dict[str, Any]) -> dict[str, Any]:
+    """Analyse one claimed job and settle its state. Assumes it is `processing`."""
+    job_id = job["job_id"]
+    text, error = _read_log(job)
+
+    # Give the log another chance on a later sweep rather than judging a job we
+    # could not read - unless xyOps already told us it failed, which is enough.
+    if error and not triage.platform_failed(job) and job.get("attempts", 1) < service.MAX_ATTEMPTS:
+        log.info("job=%s log unavailable (%s); will retry", job_id, error)
+        service.fail_job(job_id, f"log unavailable: {error}")
+        return {"verdict": None, "notify": {"sent": False, "reason": "log unavailable"}}
+
+    # One snapshot for both steps: the model compares this run against it, and
+    # the notifier decides against the same values.
+    event_id = str(job.get("event_id") or job.get("event_title") or "")
+    state = service.event_state(event_id) if event_id else None
+
+    verdict, fingerprint = triage.analyse(job, text, previous=state)
+    log.info(
+        "job=%s severity=%s source=%s same_as_previous=%s title=%r",
+        job_id, verdict["severity"], verdict["_source"],
+        verdict.get("same_as_previous"), verdict["title"],
+    )
+
+    outcome = notifier.notify(job, verdict, fingerprint, state=state)
+    service.complete_job(job_id)
+    return {"verdict": verdict, "notify": outcome}
+
+
+def process_now(job_id: str) -> Optional[dict[str, Any]]:
+    job = service.claim_job(job_id, worker=config.WORKER)
+    if job is None:
+        log.info("job=%s already in flight or done; skipping", job_id)
+        return None
+    try:
+        return process_job(job)
+    except Exception as exc:
+        log.exception("processing failed for job=%s", job_id)
+        service.fail_job(job_id, str(exc)[:500])
+        return None
+```
+
+`run_cycle()` does the same for a batch of `AGENT_BATCH_SIZE` claimed jobs and **never raises**, so one bad job can't stop the recovery loop:
+
+```python
+def _recovery_loop() -> None:
+    while not _stop.wait(config.RECOVERY_INTERVAL_SECONDS):
+        try:
+            run_cycle()
+        except Exception:
+            log.exception("recovery sweep failed")
+```
+
+`threading.Event.wait(timeout)` works as an interruptible sleep: `stop_recovery()` sets the event and the loop exits straight away.
+
+---
+
+### 4.6 Deterministic log scan ([logtext.py](../agentIngest/agent/logtext.py))
+
+```python
+ERROR_RE = re.compile(
+    r"(?i)(?:^|[\s\[\(:])(?:error|errors|exception|traceback|critical|fatal|failed|failure|"
+    r"denied|unauthori[sz]ed|forbidden|timeout|timed\s+out|refused|unreachable|"
+    r"could\s+not|cannot|unable\s+to|not\s+found|invalid|rejected)\b"
+)
+WARN_RE = re.compile(r"(?i)(?:^|[\s\[\(:])(?:warn|warning|retrying|retry\s+\d|deprecat)\b")
+NOISE_RE = re.compile(r"(?i)^\s*(?:#|\[xyops\]|job\s+id:|hostname:|command:)")
+
+
+def scan(text: str) -> dict[str, Any]:
+    """Line counts and ticket ids, used for the prompt and the LLM-down fallback."""
+    lines = keep(text.splitlines())
+    errors = [line for line in lines if ERROR_RE.search(line) and not NOISE_RE.match(line)]
+    warnings = [line for line in lines if WARN_RE.search(line) and line not in errors]
+    return {
+        "lines": len(lines),
+        "error_lines": len(errors),
+        "warning_lines": len(warnings),
+        "first_error": errors[0].strip()[:600] if errors else None,
+        "tickets": sorted(set(_ticket_re.findall("\n".join(lines))))[:50],
+    }
+```
+
+`excerpt()` passes the whole log if it is under `AGENT_MAX_LOG_CHARS` (20,000). Otherwise it keeps **the first 40 lines, the last 60 lines, and the lines around each error**, and marks each gap with `... N lines omitted ...`. The last lines matter most because automations print their summary at the end.
+
+`keep()` removes lines that match `AGENT_IGNORE_PATTERN` before anything is counted or sent to the LLM. Use it for running totals carried over from earlier runs, which would otherwise mislead the analysis.
+
+---
+
+### 4.7 Triage: prompt, verdict, safety rules, fingerprint ([triage.py](../agentIngest/agent/triage.py))
+
+#### 4.7.1 `analyse()`, the entry point ([L386](../agentIngest/agent/triage.py#L386))
+
+```python
+def analyse(job, text, previous=None) -> tuple[dict[str, Any], str]:
+    """Returns (verdict, fingerprint). Never raises on a bad model reply."""
+    facts = logtext.scan(text)
+
+    # Spending a model call on a clean run only invites it to over-read the log.
+    if (
+        config.SKIP_CLEAN_RUNS
+        and not _platform_failed(job)
+        and not facts["error_lines"]
+        and not facts["warning_lines"]
+    ):
+        verdict = _clean_run_verdict(job, facts)
+        verdict["_source"] = "clean"
+        verdict["_facts"] = facts
+        return verdict, _fingerprint(job, verdict)
+
+    verdict = llm.complete_json(SYSTEM_PROMPT, build_prompt(job, text, facts, previous))
+
+    if verdict is None:
+        verdict = fallback_verdict(job, facts)
+        verdict["_source"] = "fallback"
+    else:
+        verdict["_source"] = "llm"
+
+    verdict = _clean(job, verdict, facts, text)
+    verdict["_facts"] = facts
+    if verdict.get("_adjusted"):
+        log.info("job=%s severity set to %s: %s", job.get("job_id"), verdict["severity"], verdict["_adjusted"])
+    return verdict, _fingerprint(job, verdict)
+```
+
+#### 4.7.2 `SYSTEM_PROMPT` ([L40](../agentIngest/agent/triage.py#L40)): what the LLM is told
+
+A condensed view of the rules the prompt already enforces:
+
+| Section | Intent |
+|---|---|
+| Escalate when | Job never started, crashed or exited non-zero, external system rejected the call, credential/config/connectivity problem, specific tickets failed |
+| Do NOT escalate | No work items, skipped by design, retry that succeeded, informational output |
+| THE PLATFORM'S OWN VERDICT | When `platform_reported_failure` is true, treat it as fact |
+| THIS RUN ONLY | Numbers about this run vs running totals: never report the totals as this run's outcome |
+| TICKET IDS ARE NOT PROOF OF WORK | IDs that appear only in pre-flight or health-check output are not impacted tickets |
+| EVIDENCE | Lines copied word-for-word; with no evidence, severity must be `low` |
+| IS THIS THE SAME PROBLEM AS LAST TIME? | Use the PREVIOUS_FAILURE block to set `same_as_previous`; **default to true** |
+| Severity rules | critical / high / medium / low definitions |
+
+Output contract (JSON only):
+
+```json
+{
+  "severity": "critical|high|medium|low",
+  "title": "...", "summary": "...", "root_cause": "...",
+  "owning_team": "IT-EX-Automation|servicenow|active_directory|citrix|network|cyberark|smartsheet|email|unknown",
+  "next_step": "...", "confidence": 0.0,
+  "impacted_tickets": ["TASK0001"],
+  "business_impact": "...",
+  "this_run": {"automation_started": true, "work_items_found": 1, "work_items_failed": 1},
+  "evidence": ["<verbatim log line>"],
+  "same_as_previous": true,
+  "change_note": "..."
+}
+```
+
+#### 4.7.3 `build_prompt()` ([L208](../agentIngest/agent/triage.py#L208))
+
+```python
+def build_prompt(job, text, facts, previous=None) -> str:
+    header = {
+        "event": job.get("event_title") or job.get("event_id"),
+        "job_id": job.get("job_id"),
+        "server": job.get("server"),
+        "job_result": _raw_code(job) or None,
+        "platform_reported_failure": _platform_failed(job),
+        "platform_message": (job.get("description") or "")[:500] or None,
+        "elapsed_seconds": job.get("elapsed"),
+        "log_lines": facts["lines"],
+        "error_lines": facts["error_lines"],
+        "warning_lines": facts["warning_lines"],
+        "ticket_ids_mentioned_anywhere": facts["tickets"],
+        "log_available": bool(text),
+    }
+    body = logtext.excerpt(text) if text else "(no log was available for this run)"
+    prompt = f"JOB\n{json.dumps(header, indent=2, default=str)}"
+
+    if previous and previous.get("state") == "failing":
+        prior = {
+            "already_failing_since": _when(previous.get("first_failed_at")),
+            "consecutive_failed_runs": previous.get("consecutive_failures"),
+            "last_reported_title": previous.get("last_title"),
+            "last_reported_summary": previous.get("last_summary"),
+            "last_reported_root_cause": previous.get("last_root_cause"),
+        }
+        prompt += f"\n\nPREVIOUS_FAILURE\n{json.dumps(prior, indent=2, default=str)}"
+
+    return f"{prompt}\n\nLOG\n{body}"
+```
+
+#### 4.7.4 `fallback_verdict()`: the rule-based verdict when the LLM is down
+
+```python
+def fallback_verdict(job, facts) -> dict[str, Any]:
+    """Used when the LLM is unreachable, so an outage never silences alerting."""
+    if _platform_failed(job):
+        severity = "critical"
+    elif facts["error_lines"]:
+        severity = "high"
+    elif facts["warning_lines"]:
+        severity = "medium"
+    else:
+        severity = "low"
+    return {
+        "severity": severity,
+        "title": f"job_result {_raw_code(job) or 'unknown'}, {facts['error_lines']} error line(s) in the log",
+        "summary": job.get("description") or facts["first_error"] or "Job ended without a clean result.",
+        "root_cause": "Not analysed - the LLM was unavailable.",
+        "owning_team": "unknown",
+        "next_step": "Open the job in xyOps and review the log.",
+        "confidence": 0.2,
+        "impacted_tickets": facts["tickets"][:20],
+        "business_impact": "Unknown - rule-based verdict only.",
+    }
+```
+
+#### 4.7.5 `_clean()` ([L291](../agentIngest/agent/triage.py#L291)): the fixed rules that override the LLM
+
+This is where the deterministic half of the hybrid lives today:
+
+```python
+def _clean(job, verdict, facts, text) -> dict[str, Any]:
+    """Constrain model output to the contract the notifier and store expect."""
+    severity = str(verdict.get("severity", "medium")).lower().strip()
+    verdict["severity"] = severity if severity in SEVERITY_ORDER else "medium"
+
+    team = str(verdict.get("owning_team") or "unknown").lower().strip()
+    detected = _TEAM_BY_KEY.get(team, "unknown")
+    verdict["detected_team"] = detected
+    verdict["owning_team"] = DEFAULT_OWNING_TEAM if detected == "unknown" else detected
+    ...
+    verdict["evidence"] = _verified_evidence(verdict, text)
+
+    # Default to "same" on anything unparseable: a wrong `false` emails the team
+    # about a problem they already know about.
+    same = verdict.get("same_as_previous")
+    verdict["same_as_previous"] = same if isinstance(same, bool) else True
+    ...
+
+    # xyOps saying the job failed outranks anything read from the log, and a run
+    # that never started is not a quiet day - the schedule is not running.
+    if _platform_failed(job) or started is False:
+        if SEVERITY_ORDER[verdict["severity"]] < SEVERITY_ORDER["high"]:
+            verdict["_adjusted"] = (...)
+            verdict["severity"] = "high"
+    # A run that found no work cannot have blocked anything, whatever the
+    # cumulative totals in the log say.
+    elif found == 0:
+        verdict["severity"] = "low"
+        verdict["_adjusted"] = "no work items found this run"
+    # An escalation with nothing quotable behind it is the model reading a
+    # summary block as if it described this run.
+    elif (
+        verdict.get("_source") == "llm"
+        and SEVERITY_ORDER[verdict["severity"]] >= SEVERITY_ORDER["high"]
+        and not verdict["evidence"]
+    ):
+        verdict["severity"] = "medium"
+        verdict["_adjusted"] = "no verifiable evidence of a failure in this run"
+
+    # Only keep ids the log actually contains, so the blast radius is not inflated.
+    seen = set(facts["tickets"])
+    claimed = verdict.get("impacted_tickets")
+    verdict["impacted_tickets"] = (
+        [t for t in claimed if t in seen][:50] if isinstance(claimed, list) else []
+    )
+    return verdict
+```
+
+`_verified_evidence()` keeps an evidence line only if it (after whitespace normalisation, ≥12 characters) **really appears in the log**, so invented quotes are dropped:
+
+```python
+def _verified_evidence(verdict, text) -> list[str]:
+    quoted = verdict.get("evidence")
+    if not isinstance(quoted, list):
+        return []
+    haystack = " ".join(text.split()).lower()
+    kept: list[str] = []
+    for item in quoted:
+        candidate = str(item)
+        probe = " ".join(candidate.split()).lower()
+        if len(probe) >= 12 and probe in haystack:
+            kept.append(candidate.strip()[:300])
+    return kept[:10]
+```
+
+#### 4.7.6 `_fingerprint()` ([L163](../agentIngest/agent/triage.py#L163)): the duplicate key today
+
+```python
+def _fingerprint(job, verdict) -> str:
+    """Keyed on the event alone. Everything the model produces - title, severity,
+    owning team - gets reworded or reclassified between runs of the same broken
+    job, which made every repeat look like a new failure.
+    """
+    seed = str(job.get("event_id") or job.get("event_title") or "")
+    return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:32]
+```
+
+> ⚠️ **Limitation:** the key is the service only. Two *different* errors in the same service get the same fingerprint, so telling them apart falls to the LLM's `same_as_previous` judgement. See [§11 Step 1](#step-1-deterministic-error-signature).
+
+#### 4.7.7 Email threshold ([L423](../agentIngest/agent/triage.py#L423))
+
+```python
+def worth_notifying(severity: str) -> bool:
+    return SEVERITY_ORDER.get(severity, 1) >= SEVERITY_ORDER.get(config.MIN_SEVERITY, 2)
+```
+
+---
+
+### 4.8 LLM client ([llm.py](../agentIngest/agent/llm.py))
+
+Portkey is the primary route, direct Azure OpenAI is the fallback (LangChain's `with_fallbacks`), and if neither is configured the client is `None`:
+
+```python
+def _build_client():
+    portkey = _build_portkey_client()
+    azure = _build_azure_client() if config.PORTKEY_FALLBACK_ENABLED else None
+
+    if portkey is None:
+        if azure is None:
+            log.warning("no LLM configured; the agent will use rule-based verdicts")
+        else:
+            log.warning("Portkey not configured; using direct Azure OpenAI")
+        return azure
+    if azure is None:
+        return portkey
+    return portkey.with_fallbacks([azure])
+```
+
+gpt-5 and the o-series models reject `max_tokens` and any temperature other than 1, so the parameters are chosen per model:
+
+```python
+_RESTRICTED_PREFIXES = ("gpt-5", "o1", "o3", "o4")
+
+def _token_params(model: str) -> dict[str, Any]:
+    if model.lower().startswith(_RESTRICTED_PREFIXES):
+        return {
+            "temperature": 1.0,
+            "model_kwargs": {
+                "max_completion_tokens": max(config.LLM_MAX_TOKENS, 4000),
+                "reasoning_effort": config.LLM_REASONING_EFFORT,
+            },
+        }
+    return {"temperature": config.LLM_TEMPERATURE, "max_tokens": config.LLM_MAX_TOKENS}
+```
+
+Getting JSON out of the reply copes with code fences and surrounding prose; any failure returns `None`, which triggers `fallback_verdict`:
+
+```python
+def _extract_json(text: str) -> Optional[dict[str, Any]]:
+    text = text.strip()
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if fence:
+        text = fence.group(1)
+    else:
+        start, end = text.find("{"), text.rfind("}")
+        if start == -1 or end <= start:
+            return None
+        text = text[start : end + 1]
+    try:
+        return json.loads(text)
+    except ValueError:
+        return None
+
+
+def complete_json(system_prompt: str, user_prompt: str) -> Optional[dict[str, Any]]:
+    client = get_client()
+    if client is None:
+        return None
+    try:
+        response = client.invoke([("system", system_prompt), ("human", user_prompt)])
+    except Exception:
+        log.exception("LLM call failed")
+        return None
+    content = getattr(response, "content", "")
+    if isinstance(content, list):
+        content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+    verdict = _extract_json(str(content))
+    if verdict is None:
+        log.warning("LLM returned no parseable JSON (%d chars): %r", len(content), content[:400])
+    return verdict
+```
+
+---
+
+### 4.9 Notifier: record, decide, email ([notifier.py](../agentIngest/agent/notifier.py))
+
+#### 4.9.1 `notify()` ([L204](../agentIngest/agent/notifier.py#L204))
+
+```python
+def notify(job, verdict, fingerprint, state=None) -> dict[str, Any]:
+    """Record every verdict; email only on a change of state. Never raises."""
+    outcome = {"sent": False, "reason": None, "incident_id": None}
+    severity = verdict["severity"]
+    event_id = str(job.get("event_id") or job.get("event_title") or "")
+
+    incident_id = service.record_incident(job, verdict, fingerprint)
+    outcome["incident_id"] = incident_id
+
+    # Storing the quiet verdicts too is what makes false negatives findable later.
+    if not triage.worth_notifying(severity):
+        outcome["reason"] = f"below {config.MIN_SEVERITY} threshold"
+        service.close_incident(incident_id, status=INCIDENT_NO_ACTION, error=outcome["reason"])
+        if event_id and service.mark_event_healthy(event_id, job.get("event_title")):
+            log.info("event=%s recovered (recorded, not emailed)", event_id)
+        return outcome
+
+    if state is None and event_id:
+        state = service.event_state(event_id)
+    should_alert, reason = _alert_decision(state, verdict, fingerprint)
+    verdict["_state"] = state
+
+    if not should_alert:
+        outcome["reason"] = reason
+        service.close_incident(incident_id, status=INCIDENT_SUPPRESSED, error=reason)
+        _remember(event_id, job, verdict, fingerprint, notified=False)
+        log.info("incident %s suppressed: %s", incident_id, reason)
+        return outcome
+
+    people = recipients_for(severity)
+    subject = subject_for(job, verdict)
+
+    if not config.NOTIFY_ENABLED or not people:
+        outcome["reason"] = "notifications disabled" if not config.NOTIFY_ENABLED else "no recipients"
+        service.close_incident(incident_id, status=INCIDENT_HELD, subject=subject, error=outcome["reason"])
+        log.warning("incident %s not sent: %s", incident_id, outcome["reason"])
+        return outcome            # ⚠️ state is not saved here - see §11 Step 3
+
+    sent, error = _send(people, subject, render(job, verdict),
+                        "high" if severity in ("critical", "high") else "normal", job.get("job_id"))
+    outcome["sent"] = sent
+    outcome["reason"] = error or reason
+    service.close_incident(
+        incident_id,
+        status=INCIDENT_NOTIFIED if sent else INCIDENT_FAILED,
+        recipients=", ".join(people), subject=subject, error=error, notified=sent,
+    )
+    if event_id:
+        _remember(event_id, job, verdict, fingerprint, notified=sent)
+    return outcome
+```
+
+#### 4.9.2 `_alert_decision()` ([L162](../agentIngest/agent/notifier.py#L162)): Yogesh's noise reduction
+
+```python
+def _alert_decision(state, verdict, fingerprint) -> tuple[bool, str]:
+    """Alert on changes of state, not on every occurrence."""
+    severity = verdict["severity"]
+
+    if state is None or state.get("state") != "failing":
+        previous = state.get("last_notified_at") if state else None
+        if previous and time.time() - previous < config.COOLDOWN_MINUTES * 60:
+            return False, "flapping between healthy and failing"
+        return True, "new failure"
+
+    if SEVERITY_ORDER.get(severity, 0) > SEVERITY_ORDER.get(state.get("severity") or "low", 0):
+        return True, f"severity rose to {severity}"
+
+    last = state.get("last_notified_at")
+    if not last:
+        return True, "not yet notified"
+
+    elapsed = time.time() - last
+
+    # Rate limit it: an unstable "different cause" must not become a new mail loop.
+    if not verdict.get("same_as_previous", True):
+        if elapsed >= config.COOLDOWN_MINUTES * 60:
+            return True, f"cause changed: {verdict.get('change_note') or 'different failure'}"
+        return False, "cause reported as changed, but within the anti-flap window"   # ⚠️ §11 Step 3
+
+    if fingerprint != state.get("fingerprint"):
+        return True, "different event fingerprint"
+
+    if config.REMINDER_SECONDS and elapsed >= config.REMINDER_SECONDS:
+        return True, f"still failing after {config.REMINDER_HOURS}h"
+
+    since = int(elapsed / 60)
+    return False, f"already alerted {since}m ago, run {state.get('consecutive_failures', 0) + 1}"
+```
+
+Decision table (current behaviour):
+
+| Condition | Result | Reason stored |
+|---|---|---|
+| Service not failing, last email < cooldown ago | suppress | `flapping between healthy and failing` |
+| Service not failing | **email** | `new failure` |
+| Severity higher than last recorded | **email** | `severity rose to X` |
+| Failing but never emailed | **email** | `not yet notified` |
+| LLM says the cause changed, ≥ cooldown since last email | **email** | `cause changed: …` |
+| LLM says the cause changed, < cooldown since last email | suppress | `…within the anti-flap window` |
+| Fingerprint differs from state | **email** | `different event fingerprint` (never happens today, because the fingerprint is the service ID) |
+| ≥ `REMINDER_HOURS` since last email | **email** | `still failing after 12h` |
+| Otherwise | suppress | `already alerted Nm ago, run N` |
+
+#### 4.9.3 `render()`: the email HTML escapes every field
+
+The LLM's output is treated as untrusted: every field goes through `html.escape`, and the xyOps link is escaped with `quote=True`. The xyOps base URL is taken from the job's own `log_url`, so dev and prod each link to their own instance:
+
+```python
+base = service.dashboard_base(job.get("log_url")) or config.DASHBOARD_URL
+if base and job.get("job_id"):
+    url = escape(f"{base}/#Job?id={job['job_id']}", quote=True)
+    link = f'<p><a href="{url}">Open the job in xyOps</a></p>'
+```
+
+#### 4.9.4 `_remember()` ([L276](../agentIngest/agent/notifier.py#L276)) → `store.mark_event_failing`
+
+`first_failed_at` is kept across runs. Severity is a **high-water mark**, so a problem that flaps critical → high → critical doesn't count as a fresh escalation each time:
+
+```python
+was_failing = bool(row) and row["state"] == "failing"
+# High-water mark: a problem that flaps critical -> high -> critical
+# must not read as a fresh escalation each time.
+if was_failing and _SEVERITY_RANK.get(row["severity"] or "", 0) >= _SEVERITY_RANK.get(severity, 0):
+    severity = row["severity"] or severity
+conn.execute(
+    """
+    INSERT INTO event_state (...) VALUES (?, ?, 'failing', ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
+    ON CONFLICT(event_id) DO UPDATE SET
+        state = 'failing', fingerprint = excluded.fingerprint, severity = excluded.severity,
+        consecutive_failures = excluded.consecutive_failures, ...
+    """,
+    (
+        event_id, event_title, fingerprint, severity,
+        (row["consecutive_failures"] + 1) if was_failing else 1,
+        row["first_failed_at"] if was_failing and row["first_failed_at"] else now,
+        now,
+        now if notified else (row["last_notified_at"] if row else None),
+        title, summary, root_cause, now,
+    ),
+)
+```
+
+`mark_event_healthy` resets the row to `healthy`, sets `consecutive_failures = 0`, and returns `True` when this run is the recovery.
+
+---
+
+### 4.10 Mail client ([emailClient/client.py](../emailClient/client.py))
+
+- `MAIL_API_KEY` is sent as a bearer token.
+- A `requests.Session` retries up to **3 times with increasing waits** on 429/500/502/503/504.
+- `sms_enabled` is **always `False`**.
+- Typed errors: `EmailAuthError` (401) and `EmailSendError` (everything else). The notifier's `_send()` catches both and returns `(False, error)`, so a mail outage never fails the job.
+
+```python
+_session = requests.Session()
+_session.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=3, backoff_factor=0.5,
+    status_forcelist=(429, 500, 502, 503, 504), raise_on_status=False,
+)))
+
+def send_email(to, subject, *, body_html=None, body_text=None, from_email=None,
+               cc=None, bcc=None, importance="normal", ...) -> dict[str, Any]:
+    if not API_KEY:
+        raise EmailAuthError("MAIL_API_KEY is not set")
+    ...
+    body: dict[str, Any] = {"to": recipients, "subject": subject,
+                            "importance": importance, "sms_enabled": False}
+    ...
+    response = _post_send(body)
+    if response.status_code == 401:
+        raise EmailAuthError(f"unauthorized: {_detail(response)}")
+    if not response.ok:
+        raise EmailSendError(f"HTTP {response.status_code}: {_detail(response)}")
+```
+
+---
+
+### 4.11 Dashboard read APIs ([app.py](../agentIngest/app.py), [service.py](../agentIngest/service.py), [store.py](../agentIngest/store.py))
+
+**Endpoints** (both token-protected, with every input validated by FastAPI `Query` constraints):
+
+```python
+@app.get("/api/tickets/stats", dependencies=[Depends(require_token)])
+def ticket_stats(days: Optional[int] = Query(default=None, ge=1, le=365)) -> dict[str, Any]:
+    return service.ticket_stats(days)
+
+
+@app.get("/api/tickets", dependencies=[Depends(require_token)])
+def list_tickets(
+    days: Optional[int] = Query(default=None, ge=1, le=365),
+    application: Optional[str] = Query(default=None, alias="app", max_length=200),
+    ticket_status: Optional[str] = Query(default=None, alias="status", pattern="^(failed|success)$"),
+    q: Optional[str] = Query(default=None, max_length=64),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> list[dict[str, Any]]:
+    return service.list_tickets(days=days, app=application, outcome=ticket_status,
+                                search=q.strip() if q else None, limit=limit, offset=offset)
+```
+
+**SQL:** each incident is expanded into one row per impacted ticket with `json_each`. A `critical`/`high` verdict means the ticket **failed** that run:
+
+```python
+_TICKET_ROWS = """
+WITH ticket_rows AS (
+    SELECT je.value      AS ticket,
+           i.id          AS incident_id,
+           i.job_id      AS job_id,
+           COALESCE(i.event_title, 'unknown') AS app,
+           i.severity    AS severity,
+           i.owning_team AS owning_team,
+           i.title       AS title,
+           i.root_cause  AS root_cause,
+           i.next_step   AS next_step,
+           i.created_at  AS created_at,
+           CASE WHEN i.severity IN ('critical', 'high') THEN 'failed' ELSE 'success' END AS outcome
+      FROM incidents i, json_each(i.impacted_tickets) je
+     WHERE i.impacted_tickets IS NOT NULL
+       AND json_valid(i.impacted_tickets)
+       AND json_type(i.impacted_tickets) = 'array'
+       AND i.created_at >= ?
+)
+"""
+
+# Partitioned by app too: the same ticket can pass in one automation and fail in another.
+_LATEST_PER_TICKET = """
+, latest AS (
+    SELECT * FROM (
+        SELECT tr.*,
+               COUNT(*)                OVER (PARTITION BY ticket, app) attempts,
+               SUM(outcome = 'failed') OVER (PARTITION BY ticket, app) failures,
+               ROW_NUMBER()            OVER (PARTITION BY ticket, app
+                                             ORDER BY created_at DESC, incident_id DESC) rn
+          FROM ticket_rows tr
+    ) WHERE rn = 1
+)
+"""
+```
+
+`Store.ticket_stats()` groups `ticket_rows` by app (`COUNT(DISTINCT ticket)`, `COUNT(*) attempts`, success/failed sums), then computes `success_rate`. `Store.list_tickets()` adds optional `app` / `outcome` / `LIKE` filters **with parameters, never string formatting**, and sorts failures first.
+
+**Frontend dev proxy** ([frontend/vite.config.ts](../frontend/vite.config.ts)) adds the token on the server side, so the browser bundle never contains it:
+
+```ts
+const token = loadEnv(mode, repoRoot, '').INGEST_TOKEN ?? '';
+const ingest: ProxyOptions = {
+  target: 'http://localhost:8090',
+  configure: (proxy) => {
+    proxy.on('proxyReq', (proxyReq) => {
+      if (token) proxyReq.setHeader('X-Ingest-Token', token);
+    });
+  },
+};
+// proxy: { '/api/tickets': ingest, '/api': 'http://localhost:8060' }
+```
+
+> Production note: a built frontend has no proxy. A reverse proxy or gateway in front of `agentIngest` must add `X-Ingest-Token` for `/api/tickets*`, otherwise the page gets 401. **Do not** put the token into the frontend build.
+
+---
+
+## 5. Data model and state machines
+
+### 5.1 Tables (`agentIngest/data/jobs.db`)
+
+| Table | Key | Purpose | Written by |
+|---|---|---|---|
+| `jobs` | `job_id` | Every webhook received, log-fetch status, processing lease/attempts | `record`, `claim*`, `begin/finish_fetch`, `complete`, `fail` |
+| `incidents` | `id` | One verdict per processed run: severity, title, root cause, tickets, fingerprint, notify outcome | `add_incident`, `close_incident` |
+| `event_state` | `event_id` | Current healthy/failing state per service (Yogesh) | `mark_event_failing`, `mark_event_healthy` |
+
+Indexes: `idx_jobs_status(status, received_at)`, `idx_jobs_log_status`, `idx_jobs_event(event_id, status)`, `idx_incidents_fp(fingerprint, notified_at)`, `idx_incidents_job(job_id)`.
+
+### 5.2 Job lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> unprocessed: POST /ingest (new job_id)
+  unprocessed --> processing: claim_job / claim (lease 300s)
+  processing --> processed: complete_job
+  processing --> unprocessed: fail_job (attempts < 5)
+  processing --> failed: fail_job (attempts ≥ 5)
+  processing --> processing: lease expired → reclaimed by sweep
+  processed --> [*]
+  failed --> [*]
+```
+
+Log status: `pending → fetching → fetched | failed`, or `pending → skipped` when there's no `log_url`.
+
+### 5.3 Incident lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> open: record_incident
+  open --> no_action: below AGENT_MIN_SEVERITY
+  open --> suppressed: _alert_decision = False
+  open --> held: notifications disabled / no recipients
+  open --> notified: email sent
+  open --> send_failed: mail error
+```
+
+### 5.4 Service state (`event_state`)
+
+```mermaid
+stateDiagram-v2
+  [*] --> healthy
+  healthy --> failing: verdict ≥ MIN_SEVERITY (mark_event_failing)
+  failing --> failing: repeat failure (consecutive_failures+1, severity high-water)
+  failing --> healthy: verdict < MIN_SEVERITY (mark_event_healthy → recovered_at)
+```
+
+---
+
+## 6. Configuration reference
+
+| Variable | Default | Where | Meaning |
+|---|---|---|---|
+| `INGEST_TOKEN` | — (required) | app.py | Shared secret for `X-Ingest-Token` |
+| `INGEST_ALLOW_INSECURE` | false | app.py | Local only: allow running without a token |
+| `INGEST_HOST` / `INGEST_PORT` | 0.0.0.0 / 8090 | app.py | `python -m agentIngest.app` |
+| `INGEST_DB_PATH` | data/jobs.db | service.py | SQLite path |
+| `INGEST_LEASE_SECONDS` | 300 | service.py | How long a claim lasts before the sweep can take it back |
+| `INGEST_MAX_ATTEMPTS` | 5 | service.py | Attempts before a job is marked permanently `failed` |
+| `XYOPS_BASE_URL` | "" | service.py | Allowed origins for log URLs (SSRF guard) |
+| `XYOPS_LOG_URL_REWRITE` | "" | service.py | `from=>to` origin rewrites |
+| `LOG_MIN_BYTES` / `LOG_FETCH_ATTEMPTS` / `LOG_RETRY_DELAY_SECONDS` / `LOG_MAX_BYTES` | 1 / 3 / 5 / 8 MiB | service.py | Log fetch behaviour |
+| `AGENT_ENABLED` | true | config.py | Run analysis at all |
+| `AGENT_RECOVERY_INTERVAL_SECONDS` | 300 | config.py | Sweep period (0 = off) |
+| `AGENT_BATCH_SIZE` / `AGENT_INTERVAL_SECONDS` | 10 / 120 | config.py | Batch mode |
+| `AGENT_MAX_LOG_CHARS` / `AGENT_MAX_ERROR_LINES` | 20000 / 60 | config.py | Excerpt size |
+| `AGENT_TICKET_PATTERN` | `\b(?:TASK\|SCTASK\|INC\|RITM\|REQ\|CHG)\d{5,}\b` | config.py | Ticket ID regex |
+| `AGENT_IGNORE_PATTERN` | "" | config.py | Lines removed before the scan and the LLM |
+| `AGENT_SKIP_CLEAN_RUNS` | **true** (⚠️ `.env` sets **false**) | config.py | Skip the LLM for clean successful runs |
+| `AGENT_MIN_SEVERITY` | high | config.py | Minimum severity that can email |
+| `AGENT_COOLDOWN_MINUTES` | 120 | config.py | Anti-flap / cause-change window |
+| `AGENT_REMINDER_HOURS` | 12 | config.py | Re-alert interval while still failing |
+| `AGENT_NOTIFY_ENABLED` | true | config.py | Master email switch |
+| `ALERT_RECIPIENTS` / `ALERT_RECIPIENTS_CRITICAL` | — | config.py | Recipients (critical adds the second list) |
+| `AGENT_DASHBOARD_URL` | — | config.py | Fallback xyOps base URL for links |
+| `PORTKEY_*`, `AZURE_OPENAI_*`, `LLM_*` | — | config.py | LLM routing and parameters |
+| `MAIL_SEND_URL` / `MAIL_API_KEY` / `MAIL_FROM_EMAIL` / `MAIL_TIMEOUT_S` / `MAIL_VERIFY_SSL` | — | emailClient | Mail service |
+
+---
+
+## 7. Security controls in place
+
+| Risk | Control | Where |
+|---|---|---|
+| Unauthenticated webhook or API calls | `X-Ingest-Token`, constant-time comparison, refuses to start without a token | `app.require_token` |
+| Forged `log_url` pointing at internal hosts (SSRF) | Origin allowlist comparing scheme, host and port together | `service.fetch_log`, `_origin` |
+| Memory exhaustion from huge logs | Streaming with the `LOG_MAX_BYTES` cap | `service._stream` |
+| Logs containing sensitive data kept on disk | Logs are only held in memory | `service.fetch_log` |
+| SQL injection | Parameterised queries everywhere, including dashboard filters | `store.py` |
+| Bad dashboard input | FastAPI `Query` constraints (`ge`, `le`, `max_length`, `pattern`) | `app.py` |
+| HTML/script injection via LLM text in email | `html.escape` on every field and the link | `notifier.render` |
+| Token leaking into the browser | Token added by the dev proxy on the server; production bundle verified clean | `vite.config.ts` |
+| Invented LLM evidence or tickets | Evidence and ticket IDs kept only if they appear in the log | `triage._verified_evidence`, `_clean` |
+| Accidental SMS | `sms_enabled: False` always sent | `emailClient.send_email` |
+
+---
+
+## 8. Requirements from the review meeting (Aditya)
+
+Taken from the meeting transcript:
+
+1. **Keep the deterministic flow** in the flowchart. *"This looks close to what we discussed. OK, you can go ahead and start doing it."*
+2. **Noise reduction by signature:** *"Same signature in last 24 hours → duplicate, link to previous run, occurrence + 1. Otherwise → LLM."*
+3. **Signatures must be unique per service.** *"Won't that parameter be different for different processes? … make sure it works uniquely for each and every service."* The same code can raise different errors in different services (e.g. FAR vs CMPP).
+4. **Severity must be hybrid, not LLM-only.** *"If you just leave it to LLM, it will never give you appropriate severity… it will flag everything it finds as failing as severe."*
+5. **A routing table / rule file per service.** Known common issues per service; *"you should tell them what are **not** severities. Let the LLM calculate what are severities based on your notes."*
+6. **The same error can be severe in one service and not in another.** FAR access problems are common and not severe; an access error when adding someone to an AD group in software provisioning is rare and severe.
+7. **What counts as severe:** *"Primarily our own errors, system errors"*, i.e. **logic errors** (e.g. processed successfully but notes not updated). Access or permission problems are not logic errors.
+8. **Unknown or new errors:** if neither the history nor the rule file knows an error, *"it looks like it is a critical error because it has never seen it."*
+9. **"Already notified?"** yes → suppress and record the reason; no → send email, record, notify, mark the job processed.
+10. **Previous-run state is one source, not the only one** (Yogesh's proposal). *"You still need governing data."*
+11. **No classification model yet.** There isn't enough labelled data; build up labels, check their quality by hand, and try a model in a later phase.
+12. **The rule file will evolve.** It won't be complete in the first iteration; start with the services you know well.
+13. **Target accuracy: above 95%.**
+14. **Action:** Chandan to give a realistic date for the draft (no weekend work).
+
+---
+
+## 9. Status matrix: implemented vs pending
+
+| # | Requirement | Status | Evidence / gap |
+|---|---|---|---|
+| 1 | Deterministic flow | ✅ Done | §4: webhook → claim → fetch → analyse → decide → record → complete |
+| 9 | "Already notified?" → suppress and record the reason | ✅ Done | `_alert_decision` + `INCIDENT_SUPPRESSED` with the reason in `notify_error` |
+| 10 | Previous-run state as context | ✅ Done | `event_state` + PREVIOUS_FAILURE prompt block + `same_as_previous` |
+| — | Fixed rules around the LLM | ✅ Done | Platform failure ≥ high, no work → low, no evidence → medium, invented evidence/tickets dropped |
+| — | LLM outage does not silence alerts | ✅ Done | `fallback_verdict` |
+| — | Duplicate webhooks and simultaneous deliveries ignored | ✅ Done | `ON CONFLICT DO NOTHING` + atomic claim |
+| — | Every verdict recorded (can audit and later label) | ✅ Done | `record_incident` before any decision |
+| — | Per-application ticket dashboard | ✅ Done, pushed (`732d1f1`) | `/api/tickets*` + `Tickets.tsx` |
+| 11 | No classification model now | ✅ Agreed | — |
+| 2 | Same signature within 24h → duplicate, +1, **skip the LLM** | ⚠️ Partial | Suppression exists, but it runs *after* the LLM, uses 2h/12h windows (not 24h), and there's no per-signature occurrence count |
+| 3 | Signature unique **per service and per error** | ⚠️ Partial | `_fingerprint` = service ID only; telling different errors apart falls to the LLM |
+| 4 / 5 | Hybrid severity with a **rule file per service** | ❌ Missing | No rule file; the prompt is the same for every service |
+| 6 | Same error, different severity per service | ❌ Missing | Depends on #5 |
+| 7 | Logic errors → critical | ❌ Missing | No category concept |
+| 8 | Unknown / never-seen error → treat as critical | ❌ Missing | No "seen before" check |
+| — | A new, different error must not be delayed | ❌ **Bug risk** | Cause change within 120 min is suppressed (scenario #4 below) |
+| — | State saved while notifications are off | ❌ Small bug | The `held` path returns before `_remember` (scenario #11) |
+| — | "Use the LLM only when necessary" | ⚠️ Config | `.env` has `AGENT_SKIP_CLEAN_RUNS=false` |
+| 13 | Measure accuracy (> 95%) | ❌ Missing | No labels, no evaluation script |
+| — | Automated tests | ❌ Missing | No `tests/` folder in `agentIngest` |
+
+---
+
+## 10. End-to-end verification results
+
+**Method:** 11 scenarios sent through the real `POST /ingest` → runner → triage → notifier path, with FastAPI's `TestClient`, a **temporary SQLite database**, and stand-ins for `service.fetch_log`, `notifier.mail.send_email` and `llm.complete_json`. The LLM stand-in is predictable: it classifies by content, answers `same_as_previous` honestly, and always returns `high` for errors. Nothing touched the real database, mail service or LLM.
+
+| # | Scenario | Aditya expects | Actual | Result |
+|---|---|---|---|---|
+| 1 | FAR access error (known, common) | Not severe → no email | high, **emailed** | ❌ no per-service rules |
+| 2 | Same FAR error again | Duplicate: +1, **skip the LLM** | suppressed, **LLM called** | ⚠️ |
+| 3 | Duplicate webhook | Ignored | ignored | ✅ |
+| 4 | FAR **new logic error** | Critical → email | high, **suppressed** ("within the anti-flap window") | ❌ **missed alert** |
+| 5 | CMPP same access error | Judged separately per service | emailed on its own | ✅ |
+| 6 | Software provisioning access error (rare) | Severe → email | emailed, but only because nothing tells it apart from FAR | ⚠️ right result, wrong reason |
+| 7 | FAR clean successful run | No email, mark healthy | no_action, healthy, **LLM called** | ⚠️ `SKIP_CLEAN_RUNS=false` |
+| 8 | FAR same error after recovering | Duplicate within 24h → suppress | suppressed (2h flap window only) | ⚠️ after 2h it would email again |
+| 9 | LLM down | Fallback, still alert | critical, emailed | ✅ |
+| 10 | Notifications disabled | Held | held | ✅ |
+| 11 | Same error again, notifications disabled | Duplicate → suppress | held again, **state not saved** | ⚠️ small bug |
+
+**Totals:** 10 LLM calls for 10 analysed jobs (none avoided), 4 emails.
+
+**Production baseline** (read-only query of the real `jobs.db`):
+
+| Service | notified | suppressed | no_action | held / send_failed |
+|---|---|---|---|---|
+| CMPP | 85 | 5 | 0 | 0 |
+| FAR | 55 | 1 | 56 | 0 |
+| SCANNING FAR | 6 | 0 | 84 | 0 |
+| VPN STANDARD | 3 | 0 | 87 | 0 |
+| primeonboarding | 1 | 0 | 44 | 0 |
+| Server Workstation Prestage - Dev | 6 | 1 | 0 | 1 / 1 |
+
+- CMPP had 26 high/critical incidents in the last 7 days, and the LLM wrote **20 different `root_cause` texts** for them. The LLM's wording can't be used as a duplicate key.
+- `event_state` is empty in this database, so Yogesh's state tracking hasn't yet run against this data.
+
+---
+
+## 11. What still needs to be done, with code
+
+> Everything in this section is **proposed and not yet implemented**. The code is a starting point for review, not a final implementation.
+
+### Step 0: Config (no code)
+
+**`.env` (root):**
+
+```dotenv
+AGENT_SKIP_CLEAN_RUNS=true
+```
+
+**[agentIngest/agent/config.py](../agentIngest/agent/config.py#L46)**, next to `COOLDOWN_MINUTES`:
+
+```python
+# Per-service severity rules (Aditya's routing table).
+RULES_PATH = Path(os.getenv(
+    "AGENT_RULES_PATH", Path(__file__).resolve().parents[1] / "rules" / "services.yaml"
+))
+# Same signature for the same service inside this window is a duplicate: no LLM, no email.
+DEDUP_WINDOW_HOURS = float(os.getenv("AGENT_DEDUP_WINDOW_HOURS", "24"))
+# A signature not seen for this long counts as new/unknown.
+UNKNOWN_LOOKBACK_DAYS = int(os.getenv("AGENT_UNKNOWN_LOOKBACK_DAYS", "30"))
+```
+
+**[agentIngest/requirements.txt](../agentIngest/requirements.txt):** add `pyyaml`. It's installed in the venv (6.0.3) but not listed.
+
+---
+
+### Step 1: Deterministic error signature
+
+#### 1a. [logtext.py](../agentIngest/agent/logtext.py): `normalise()` and `signature_line`
+
+```python
+_EXCEPTION_RE = re.compile(r"\b[A-Za-z_][\w.]*(?:Error|Exception|Denied|Timeout)\b\s*[:(]")
+
+# Order matters: timestamps and GUIDs before bare numbers, tickets before numbers.
+_VOLATILE = [
+    (re.compile(r"\b\d{4}-\d\d-\d\d[T ]\d\d:\d\d(?::\d\d)?(?:[.,]\d+)?(?:Z|[+-]\d\d:?\d\d)?\b"), "<ts>"),
+    (re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b", re.I), "<guid>"),
+    (re.compile(config.TICKET_PATTERN), "<ticket>"),
+    (re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.]+\b"), "<email>"),
+    (re.compile(r"(?:[A-Za-z]:)?(?:\\\\|[\\/])[^\s'\"]+"), "<path>"),
+    (re.compile(r"\b0x[0-9a-f]+\b", re.I), "<hex>"),
+    (re.compile(r"\b\d+\b"), "<n>"),
+]
+
+
+def normalise(line: str) -> str:
+    """Strip the parts of an error line that change between runs of the same failure."""
+    for pattern, token in _VOLATILE:
+        line = pattern.sub(token, line)
+    return " ".join(line.lower().split())[:300]
+```
+
+In `scan()`:
+
+```python
+    exceptions = [line for line in errors if _EXCEPTION_RE.search(line)]
+    return {
+        ...,
+        "first_error": errors[0].strip()[:600] if errors else None,
+        # The last exception line names the real cause; the first error is often just "Traceback".
+        "signature_line": (exceptions[-1] if exceptions else (errors[0] if errors else "")).strip()[:600],
+        ...
+    }
+```
+
+#### 1b. [triage.py `_fingerprint`](../agentIngest/agent/triage.py#L163): replace
+
+```python
+def _fingerprint(job: dict[str, Any], facts: dict[str, Any]) -> str:
+    """Service + normalised error: stable across runs, distinct across services and causes.
+
+    Never derived from model output, which is reworded between runs.
+    """
+    event = str(job.get("event_id") or job.get("event_title") or "")
+    line = facts.get("signature_line") or ""
+    cause = logtext.normalise(line) if line else f"exit:{_raw_code(job) or 'none'}"
+    return hashlib.sha256(f"{event}|{cause}".encode("utf-8")).hexdigest()[:32]
+```
+
+Callers change from `_fingerprint(job, verdict)` to `_fingerprint(job, facts)`. Both calls are in `analyse()`.
+
+---
+
+### Step 2: Duplicate check within 24h, before the LLM
+
+#### 2a. [store.py](../agentIngest/store.py): migrations, index, queries
+
+In `_ADDED_COLUMNS` ([L121](../agentIngest/store.py#L121)):
+
+```python
+_ADDED_COLUMNS = {
+    "jobs": {...},
+    "event_state": {...},
+    "incidents": {
+        "duplicate_of": "INTEGER",
+        "occurrence": "INTEGER NOT NULL DEFAULT 1",
+        "matched_rule": "TEXT",
+        "category": "TEXT",
+    },
+}
+```
+
+In `SCHEMA`, after the incidents indexes:
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_incidents_sig ON incidents(event_id, fingerprint, created_at);
+```
+
+> `CREATE INDEX` in `SCHEMA` runs before the column migrations. That's fine here because `event_id`, `fingerprint` and `created_at` already exist.
+
+New methods, next to `notified_since` ([L483](../agentIngest/store.py#L483)):
+
+```python
+    def last_occurrence(self, event_id: str, fingerprint: str, since: float) -> Optional[dict[str, Any]]:
+        """Most recent announced-or-suppressed incident with this signature inside the window."""
+        # held/send_failed excluded: a first alert that never went out must not become the anchor.
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT id, severity, title, summary, root_cause, owning_team, next_step,
+                       impacted_tickets, category, matched_rule, occurrence
+                  FROM incidents
+                 WHERE event_id = ? AND fingerprint = ? AND created_at >= ?
+                   AND status IN (?, ?)
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT 1
+                """,
+                (event_id, fingerprint, since, INCIDENT_NOTIFIED, INCIDENT_SUPPRESSED),
+            ).fetchone()
+        return _incident(row) if row else None
+
+    def signature_seen(self, event_id: str, fingerprint: str, since: float) -> bool:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM incidents WHERE event_id = ? AND fingerprint = ? AND created_at >= ? LIMIT 1",
+                (event_id, fingerprint, since),
+            ).fetchone()
+        return row is not None
+```
+
+In `add_incident` ([L432](../agentIngest/store.py#L432)), add the four columns:
+
+```python
+                INSERT INTO incidents
+                    (job_id, event_id, event_title, severity, title, summary, root_cause,
+                     owning_team, next_step, confidence, impacted_tickets, fingerprint,
+                     source, verdict, status, duplicate_of, occurrence, matched_rule,
+                     category, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ...
+                    INCIDENT_OPEN,
+                    verdict.get("duplicate_of"),
+                    int(verdict.get("occurrence") or 1),
+                    verdict.get("matched_rule"),
+                    verdict.get("category"),
+                    time.time(),
+```
+
+> `_incident()` json-decodes `impacted_tickets`/`verdict` when present, so it works for the partial row too.
+
+#### 2b. [service.py](../agentIngest/service.py#L290): wrappers next to `in_cooldown`
+
+```python
+def last_occurrence(event_id: str, fingerprint: str, *, hours: float) -> Optional[dict[str, Any]]:
+    return store.last_occurrence(event_id, fingerprint, time.time() - hours * 3600)
+
+
+def signature_seen(event_id: str, fingerprint: str, *, days: int) -> bool:
+    return store.signature_seen(event_id, fingerprint, time.time() - days * 86400)
+```
+
+#### 2c. [triage.py `analyse`](../agentIngest/agent/triage.py#L386): skip the LLM on a duplicate
+
+```python
+def analyse(job, text, previous=None) -> tuple[dict[str, Any], str]:
+    facts = logtext.scan(text)
+    fingerprint = _fingerprint(job, facts)
+    event_id = str(job.get("event_id") or job.get("event_title") or "")
+    service_rules = rules.for_service(job)
+
+    if (config.SKIP_CLEAN_RUNS and not _platform_failed(job)
+            and not facts["error_lines"] and not facts["warning_lines"]):
+        verdict = _clean_run_verdict(job, facts)
+        verdict["_source"] = "clean"
+        verdict["_facts"] = facts
+        return verdict, fingerprint
+
+    # Aditya: same signature for this service inside the window -> link, count, no LLM.
+    if event_id and (facts["error_lines"] or _platform_failed(job)):
+        prior = service.last_occurrence(event_id, fingerprint, hours=service_rules.dedup_window_hours)
+        if prior:
+            verdict = _duplicate_verdict(prior, facts)
+            return verdict, fingerprint
+
+    seen_before = bool(event_id) and service.signature_seen(
+        event_id, fingerprint, days=config.UNKNOWN_LOOKBACK_DAYS
+    )
+    verdict = llm.complete_json(SYSTEM_PROMPT, build_prompt(job, text, facts, previous, service_rules))
+    if verdict is None:
+        verdict = fallback_verdict(job, facts)
+        verdict["_source"] = "fallback"
+    else:
+        verdict["_source"] = "llm"
+
+    verdict = _clean(job, verdict, facts, text, service_rules=service_rules, seen_before=seen_before)
+    verdict["_facts"] = facts
+    ...
+    return verdict, fingerprint
+
+
+def _duplicate_verdict(prior: dict[str, Any], facts: dict[str, Any]) -> dict[str, Any]:
+    """Reuse the earlier verdict for a repeat; only the counters are new."""
+    return {
+        "severity": prior["severity"],
+        "title": prior["title"],
+        "summary": prior.get("summary"),
+        "root_cause": prior.get("root_cause"),
+        "owning_team": prior.get("owning_team") or DEFAULT_OWNING_TEAM,
+        "next_step": prior.get("next_step"),
+        "confidence": 1.0,
+        "impacted_tickets": facts["tickets"][:50],
+        "business_impact": None,
+        "this_run": {"automation_started": None, "work_items_found": None, "work_items_failed": None},
+        "evidence": [],
+        "same_as_previous": True,
+        "change_note": None,
+        "category": prior.get("category"),
+        "matched_rule": prior.get("matched_rule"),
+        "duplicate_of": prior["id"],
+        "occurrence": int(prior.get("occurrence") or 1) + 1,
+        "_source": "dedup",
+        "_facts": facts,
+    }
+```
+
+> **Design decision to agree:** in a duplicate, `impacted_tickets` comes from the IDs found in the log (`facts["tickets"]`), not from the LLM, because there was no LLM call. That keeps the ticket dashboard counting repeated failures. The alternative is an empty list, which would make repeats invisible on the dashboard.
+
+---
+
+### Step 3: Notifier fixes
+
+#### 3a. [notifier.py `_alert_decision`](../agentIngest/agent/notifier.py#L162): new order of checks
+
+```python
+def _alert_decision(state, verdict, fingerprint) -> tuple[bool, str]:
+    severity = verdict["severity"]
+
+    if verdict.get("_source") == "dedup":
+        return False, (
+            f"duplicate of #{verdict['duplicate_of']} "
+            f"(occurrence {verdict['occurrence']} within {config.DEDUP_WINDOW_HOURS:g}h)"
+        )
+
+    if state is None or state.get("state") != "failing":
+        return True, "new failure"                      # repeats were already caught above
+
+    if SEVERITY_ORDER.get(severity, 0) > SEVERITY_ORDER.get(state.get("severity") or "low", 0):
+        return True, f"severity rose to {severity}"
+
+    # A new signature is new information; the anti-flap window must not hide it.
+    if fingerprint != state.get("fingerprint"):
+        return True, "new error signature for this service"
+
+    last = state.get("last_notified_at")
+    if not last:
+        return True, "not yet notified"
+    elapsed = time.time() - last
+
+    # Same signature, but the model believes the cause changed: rate limited.
+    if not verdict.get("same_as_previous", True):
+        if elapsed >= config.COOLDOWN_MINUTES * 60:
+            return True, f"cause changed: {verdict.get('change_note') or 'different failure'}"
+        return False, "cause reported as changed, but within the anti-flap window"
+
+    if config.REMINDER_SECONDS and elapsed >= config.REMINDER_SECONDS:
+        return True, f"still failing after {config.REMINDER_HOURS}h"
+
+    return False, f"already alerted {int(elapsed / 60)}m ago, run {state.get('consecutive_failures', 0) + 1}"
+```
+
+What changed and why:
+
+| Change | Why | Scenario fixed |
+|---|---|---|
+| Duplicate check first | Aditya's step: duplicate → link, +1, suppress | #2, #8 |
+| "flapping" branch removed | Repeats within 24h are now caught by the signature, not a 2h timer | #8 |
+| Fingerprint check moved **above** the anti-flap block | A different error is now a real signal (Step 1), so it must not wait 120 min | **#4** |
+
+> Keep `DEDUP_WINDOW_HOURS` per service in the reason string once the rule file exists (use `service_rules.dedup_window_hours`, passed through the verdict as `_window_hours`).
+
+#### 3b. [notifier.py `notify`](../agentIngest/agent/notifier.py#L244): save state on the `held` path
+
+```python
+    if not config.NOTIFY_ENABLED or not people:
+        outcome["reason"] = "notifications disabled" if not config.NOTIFY_ENABLED else "no recipients"
+        service.close_incident(incident_id, status=INCIDENT_HELD, subject=subject, error=outcome["reason"])
+        _remember(event_id, job, verdict, fingerprint, notified=False)
+        log.warning("incident %s not sent: %s", incident_id, outcome["reason"])
+        return outcome
+```
+
+#### 3c. [notifier.py `render`](../agentIngest/agent/notifier.py): optional extra rows
+
+```python
+    if verdict.get("category"):
+        rows.append(("Category", verdict["category"]))
+    if verdict.get("matched_rule"):
+        rows.append(("Matched rule", verdict["matched_rule"]))
+```
+
+---
+
+### Step 4: Rule file per service (hybrid severity)
+
+#### 4a. New file: `agentIngest/rules/services.yaml`
+
+```yaml
+# Per-service severity grounding (Aditya's "routing table").
+# List what is NOT severe for each service; the LLM decides the rest with this context.
+# `critical` entries are for errors we know are ours (logic) or rare-and-actionable.
+
+defaults:
+  dedup_window_hours: 24
+  unknown_floor: high          # a never-seen error that matches no rule cannot go below this
+
+services:
+  FAR:
+    match: ["FAR"]             # exact, case-insensitive match on event_title or event_id
+    not_severe:
+      - id: far-share-access
+        pattern: "permission denied|access is denied|errno 13"
+        max_severity: medium
+        reason: "Known network-share access issue for FAR; not actionable by automation"
+    critical:
+      - id: far-notes-not-updated
+        pattern: "notes? (?:were )?not updated|work ?notes? missing"
+        category: logic
+        reason: "Ticket processed but notes not written - our logic is broken"
+
+  CMPP:
+    match: ["CMPP"]
+    not_severe: []             # fill from CMPP incident history (20 distinct root causes in 7 days)
+    critical: []
+
+  "SCANNING FAR":
+    match: ["SCANNING FAR"]
+    not_severe: []
+    critical: []
+
+  "SOFTWARE PROVISIONING":
+    match: ["SW-PROVISIONING", "Software Provisioning"]
+    not_severe: []             # access errors are rare here, so they stay severe
+    critical:
+      - id: swprov-ad-group-access
+        pattern: "access (?:is )?denied.*group|insufficient (?:access )?rights"
+        category: access
+        reason: "AD group add failed - uncommon for this service and needs action"
+```
+
+#### 4b. New file: `agentIngest/agent/rules.py`
+
+```python
+"""Per-service severity rules: what each automation already knows is (not) severe."""
+
+from __future__ import annotations
+
+import logging
+import re
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any, Iterable, Optional
+
+import yaml
+
+from . import config
+from .triage_constants import SEVERITY_ORDER  # or define locally to avoid a triage<->rules cycle
+
+log = logging.getLogger("agentIngest.rules")
+
+
+@dataclass(frozen=True)
+class Rule:
+    id: str
+    kind: str                       # "not_severe" | "critical"
+    pattern: re.Pattern[str]
+    reason: str
+    max_severity: str = "medium"
+    category: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ServiceRules:
+    name: str
+    dedup_window_hours: float
+    unknown_floor: str
+    rules: tuple[Rule, ...] = ()
+
+
+def _compile(entry: dict[str, Any], kind: str) -> Optional[Rule]:
+    try:
+        max_sev = str(entry.get("max_severity", "medium")).lower()
+        return Rule(
+            id=str(entry["id"]),
+            kind=kind,
+            pattern=re.compile(str(entry["pattern"]), re.IGNORECASE),
+            reason=str(entry.get("reason", "")),
+            max_severity=max_sev if max_sev in SEVERITY_ORDER else "medium",
+            category=entry.get("category"),
+        )
+    except (KeyError, re.error) as exc:
+        log.warning("skipping invalid rule %r: %s", entry, exc)
+        return None
+
+
+@lru_cache(maxsize=4)
+def _load(path: str, mtime: float) -> dict[str, Any]:
+    with open(path, encoding="utf-8") as handle:
+        return yaml.safe_load(handle) or {}
+
+
+def load() -> dict[str, Any]:
+    """Reloads automatically when the file changes; never raises."""
+    try:
+        return _load(str(config.RULES_PATH), config.RULES_PATH.stat().st_mtime)
+    except (OSError, yaml.YAMLError) as exc:
+        log.warning("rules file unavailable (%s); using defaults only", exc)
+        return {}
+
+
+def for_service(job: dict[str, Any]) -> ServiceRules:
+    data = load()
+    defaults = data.get("defaults") or {}
+    keys = {str(job.get(k) or "").strip().casefold() for k in ("event_title", "event_id")} - {""}
+
+    for name, spec in (data.get("services") or {}).items():
+        names = {str(m).strip().casefold() for m in (spec.get("match") or [name])}
+        if keys & names:
+            compiled = [
+                *(_compile(e, "critical") for e in spec.get("critical") or []),
+                *(_compile(e, "not_severe") for e in spec.get("not_severe") or []),
+            ]
+            return ServiceRules(
+                name=name,
+                dedup_window_hours=float(spec.get("dedup_window_hours", defaults.get("dedup_window_hours", config.DEDUP_WINDOW_HOURS))),
+                unknown_floor=str(spec.get("unknown_floor", defaults.get("unknown_floor", "high"))),
+                rules=tuple(r for r in compiled if r),
+            )
+
+    return ServiceRules(
+        name="(default)",
+        dedup_window_hours=float(defaults.get("dedup_window_hours", config.DEDUP_WINDOW_HOURS)),
+        unknown_floor=str(defaults.get("unknown_floor", "high")),
+    )
+
+
+def match(service_rules: ServiceRules, lines: Iterable[str]) -> Optional[Rule]:
+    """First matching rule; `critical` rules are ordered first so they win."""
+    text = "\n".join(line for line in lines if line)
+    if not text:
+        return None
+    return next((r for r in service_rules.rules if r.pattern.search(text)), None)
+
+
+def prompt_block(service_rules: ServiceRules) -> str:
+    if not service_rules.rules:
+        return ""
+    lines = [f"SERVICE_RULES ({service_rules.name})"]
+    not_severe = [r for r in service_rules.rules if r.kind == "not_severe"]
+    critical = [r for r in service_rules.rules if r.kind == "critical"]
+    if not_severe:
+        lines.append("Known NOT severe for this service (do not rate above the stated level):")
+        lines += [f"- {r.id}: /{r.pattern.pattern}/ -> at most {r.max_severity}. {r.reason}" for r in not_severe]
+    if critical:
+        lines.append("Known critical for this service:")
+        lines += [f"- {r.id}: /{r.pattern.pattern}/ -> critical ({r.category or 'logic'}). {r.reason}" for r in critical]
+    return "\n".join(lines)
+```
+
+> **Import cycle:** `triage.py` would import `rules.py`, and `rules.py` needs `SEVERITY_ORDER`. Either define `SEVERITY_ORDER` in `rules.py` / a small constants module and import it into `triage`, or pass the severity order in. Don't import `triage` from `rules`.
+
+#### 4c. [triage.py `build_prompt`](../agentIngest/agent/triage.py#L208): add the rules block
+
+```python
+def build_prompt(job, text, facts, previous=None, service_rules=None) -> str:
+    ...
+    if service_rules is not None:
+        block = rules.prompt_block(service_rules)
+        if block:
+            prompt += f"\n\n{block}"
+
+    return f"{prompt}\n\nLOG\n{body}"
+```
+
+#### 4d. [triage.py `SYSTEM_PROMPT`](../agentIngest/agent/triage.py#L40): new instructions
+
+Insert after the "IS THIS THE SAME PROBLEM AS LAST TIME?" section ([L117](../agentIngest/agent/triage.py#L117)):
+
+```text
+SERVICE RULES
+When a SERVICE_RULES block is present, it is the team's own knowledge of this
+automation and outranks your reading of the log's tone.
+- An error matching a "Known NOT severe" entry must not be rated above the level
+  that entry gives, however alarming its wording.
+- An error matching a "Known critical" entry is critical.
+- An error that matches no entry and does not look routine must not be "low":
+  the team has never classified it.
+
+WHAT MAKES SOMETHING SEVERE FOR US
+Our own logic and system errors are the most severe: the automation reports
+success but a required update did not happen (notes not written, state not
+changed, item marked done without the action). Access and permission errors
+depend on the service - use the SERVICE_RULES block; never treat every access
+error as critical by default.
+
+Set "category" to one of:
+  "logic"    - our automation did the wrong thing or left work half done
+  "access"   - permission / authorization / credential problem
+  "external" - a downstream system failed or rejected the call
+  "platform" - xyOps could not start or run the job
+  "data"     - bad or unexpected input data
+  "none"     - nothing failed
+```
+
+Add `"category": "logic" | "access" | "external" | "platform" | "data" | "none"` to the JSON contract, and in **Severity rules** ([L147](../agentIngest/agent/triage.py#L147)) change critical to:
+
+```text
+- critical: the job never started, the job crashed, every work item THIS run found failed,
+  or a logic error in our own automation (see WHAT MAKES SOMETHING SEVERE FOR US).
+```
+
+#### 4e. [triage.py `_clean`](../agentIngest/agent/triage.py#L291): enforce the rules in code
+
+New signature:
+
+```python
+def _clean(job, verdict, facts, text, *, service_rules=None, seen_before=True) -> dict[str, Any]:
+```
+
+Add after the existing platform-failure / no-work / no-evidence block ([L334](../agentIngest/agent/triage.py#L334)) and before the ticket filtering:
+
+```python
+    category = str(verdict.get("category") or "").lower().strip()
+    verdict["category"] = category if category in _CATEGORIES else None
+
+    rule = None
+    if service_rules is not None:
+        rule = rules.match(service_rules, [*verdict["evidence"], facts.get("signature_line") or "", facts.get("first_error") or ""])
+
+    if rule and rule.kind == "critical":
+        verdict["severity"] = "critical"
+        verdict["category"] = rule.category or verdict["category"] or "logic"
+        verdict["_adjusted"] = f"rule {rule.id}: {rule.reason}"
+    elif rule and rule.kind == "not_severe":
+        # Runs after the platform-failure raise on purpose: a known-benign exit code must be able to come down.
+        if SEVERITY_ORDER[verdict["severity"]] > SEVERITY_ORDER[rule.max_severity]:
+            verdict["severity"] = rule.max_severity
+            verdict["_adjusted"] = f"rule {rule.id}: {rule.reason}"
+    elif not seen_before and found != 0 and (facts["error_lines"] or _platform_failed(job)):
+        floor = service_rules.unknown_floor if service_rules else "high"
+        if SEVERITY_ORDER[verdict["severity"]] < SEVERITY_ORDER[floor]:
+            verdict["severity"] = floor
+            verdict["_adjusted"] = "new, unrecognised error for this service"
+
+    if verdict["category"] == "logic" and SEVERITY_ORDER[verdict["severity"]] < SEVERITY_ORDER["critical"]:
+        verdict["severity"] = "critical"
+        verdict["_adjusted"] = "logic error in our automation"
+
+    verdict["matched_rule"] = rule.id if rule else None
+```
+
+with, near `SEVERITY_ORDER`:
+
+```python
+_CATEGORIES = {"logic", "access", "external", "platform", "data", "none"}
+```
+
+**Order of rules inside `_clean` after the change:**
+
+```mermaid
+flowchart TD
+  A[normalise severity / team / fields] --> B[verify evidence and tickets]
+  B --> C{platform failed<br/>or never started?}
+  C -->|yes| C1[raise to ≥ high]
+  C -->|no| D{found == 0?}
+  D -->|yes| D1[low]
+  D -->|no| E{LLM, ≥high, no evidence?}
+  E -->|yes| E1[medium]
+  C1 --> F
+  D1 --> F
+  E1 --> F
+  E -->|no| F{service rule match?}
+  F -->|critical rule| F1[critical + category]
+  F -->|not_severe rule| F2[cap at max_severity]
+  F -->|none + unseen signature| F3[floor at unknown_floor]
+  F -->|none + seen| G
+  F1 --> G{category == logic?}
+  F2 --> G
+  F3 --> G
+  G -->|yes| G1[critical]
+  G -->|no| H[filter impacted_tickets]
+  G1 --> H
+```
+
+> `fallback_verdict` also goes through `_clean`, so **the rules apply when the LLM is down too**. `analyse` must pass `service_rules` and `seen_before` on that path as well.
+
+---
+
+### Step 5: Logic-error category
+
+No separate module is needed. It's delivered by:
+- the `critical` entries with `category: logic` in `services.yaml` (4a),
+- the SYSTEM_PROMPT section and `category` output key (4d),
+- the enforcement in `_clean` (4e),
+- the `category` column in `add_incident` (2a),
+- optional "Category" row in the email (3c).
+
+---
+
+### Step 6: Labels and accuracy tracking (towards 95%)
+
+#### 6a. [store.py](../agentIngest/store.py): columns and method
+
+```python
+    "incidents": {
+        ...,
+        "label": "TEXT",          # correct | false_positive | false_negative
+        "label_note": "TEXT",
+        "labelled_at": "REAL",
+    },
+```
+
+```python
+    def set_label(self, incident_id: int, label: str, note: Optional[str]) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "UPDATE incidents SET label = ?, label_note = ?, labelled_at = ? WHERE id = ?",
+                (label, note, time.time(), incident_id),
+            )
+        return bool(cur.rowcount)
+```
+
+#### 6b. [service.py](../agentIngest/service.py) + [app.py](../agentIngest/app.py)
+
+```python
+# service.py
+LABELS = ("correct", "false_positive", "false_negative")
+
+def label_incident(incident_id: int, label: str, note: Optional[str] = None) -> bool:
+    return store.set_label(incident_id, label, note)
+```
+
+```python
+# app.py
+from pydantic import BaseModel, Field
+
+
+class LabelIn(BaseModel):
+    label: str = Field(pattern="^(correct|false_positive|false_negative)$")
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/incidents/{incident_id}/label", dependencies=[Depends(require_token)])
+def label_incident(incident_id: int, body: LabelIn) -> dict[str, Any]:
+    if not service.label_incident(incident_id, body.label, body.note):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "unknown incident")
+    return {"id": incident_id, "label": body.label}
+```
+
+If the dashboard gets label buttons, add `'/api/incidents': ingest` to the proxy in [vite.config.ts](../frontend/vite.config.ts), **above** the catch-all `'/api'` route.
+
+#### 6c. New file: `agentIngest/tools/evaluate.py`
+
+```python
+"""Accuracy of notify/suppress decisions against human labels, per service.
+
+    python -m agentIngest.tools.evaluate [--days 30]
+"""
+
+import argparse
+import sqlite3
+import time
+from collections import defaultdict
+
+from agentIngest.service import _db_path
+
+NOTIFYING = ("notified", "send_failed", "held")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--days", type=int, default=30)
+    args = parser.parse_args()
+
+    conn = sqlite3.connect(f"file:{_db_path}?mode=ro", uri=True)
+    rows = conn.execute(
+        "SELECT COALESCE(event_title, event_id), status, label FROM incidents "
+        "WHERE label IS NOT NULL AND created_at >= ?",
+        (time.time() - args.days * 86400,),
+    ).fetchall()
+
+    per_app: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for app, status, label in rows:
+        alerted = status in NOTIFYING
+        bucket = per_app[app]
+        bucket["total"] += 1
+        bucket["correct"] += label == "correct"
+        bucket["false_alert"] += alerted and label == "false_positive"
+        bucket["missed"] += (not alerted) and label == "false_negative"
+
+    print(f"{'service':<36}{'labelled':>9}{'accuracy':>10}{'false alerts':>14}{'missed':>8}")
+    for app, b in sorted(per_app.items()):
+        acc = b["correct"] / b["total"] * 100 if b["total"] else 0
+        print(f"{app:<36}{b['total']:>9}{acc:>9.1f}%{b['false_alert']:>14}{b['missed']:>8}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+### Step 7: Automated tests
+
+New folder `agentIngest/tests/`, run with `python -m pytest agentIngest/tests -q`. Add `pytest` and `httpx` (needed by FastAPI's `TestClient`) to dev requirements.
+
+**`conftest.py`:** isolated database and stand-ins for everything external:
+
+```python
+import importlib
+import os
+
+import pytest
+
+
+@pytest.fixture()
+def pipeline(tmp_path, monkeypatch):
+    monkeypatch.setenv("INGEST_DB_PATH", str(tmp_path / "jobs.db"))
+    monkeypatch.setenv("INGEST_TOKEN", "test-token")
+    monkeypatch.setenv("AGENT_RECOVERY_INTERVAL_SECONDS", "0")
+    monkeypatch.setenv("ALERT_RECIPIENTS", "test@example.invalid")
+
+    from agentIngest import service, app as app_mod
+    from agentIngest.agent import notifier, triage
+    importlib.reload(service)          # pick up the temp DB path
+
+    logs, sent, llm_calls = {}, [], []
+    monkeypatch.setattr(service, "fetch_log", lambda job_id, url: (logs.get(url, ""), None))
+    monkeypatch.setattr(notifier.mail, "send_email", lambda **kw: sent.append(kw["subject"]))
+    ...
+    yield ...
+```
+
+**`test_logtext.py`**
+
+```python
+from agentIngest.agent.logtext import normalise
+
+
+def test_same_error_different_volatile_parts_normalise_equal():
+    a = "2026-09-28 10:01:02 ERROR PermissionError: [Errno 13] Permission denied: '\\\\srv\\in\\TASK1000001.csv'"
+    b = "2026-09-29 11:22:33 ERROR PermissionError: [Errno 13] Permission denied: '\\\\srv\\in\\TASK1000999.csv'"
+    assert normalise(a) == normalise(b)
+
+
+def test_different_errors_normalise_different():
+    assert normalise("ERROR Permission denied") != normalise("ERROR notes not updated")
+```
+
+**`test_rules.py`**
+- A valid YAML file loads.
+- An invalid regex is skipped and logged, and doesn't crash.
+- `for_service` matches FAR case-insensitively, and an unknown service gets the defaults.
+- A `critical` rule wins over a `not_severe` rule when both match.
+
+**`test_pipeline.py`:** the 11 scenarios from §10 as assertions, with the target behaviour:
+
+| # | Assertion after Steps 0–4 |
+|---|---|
+| 1 | FAR access error → severity ≤ medium, status `no_action`, no email |
+| 2 | Same FAR error again → `_source == "dedup"`, **no LLM call**, `occurrence == 2` |
+| 3 | Duplicate webhook → `duplicate: true` |
+| 4 | FAR logic error → `critical`, **emailed**, reason `new error signature…` or rule match |
+| 5 | CMPP access error → evaluated on its own (not a duplicate of FAR) |
+| 6 | Provisioning AD access error → `critical` via `swprov-ad-group-access`, emailed |
+| 7 | Clean FAR run → no LLM call, `no_action`, state healthy |
+| 8 | FAR access error after recovery within 24h → `dedup`, suppressed |
+| 9 | LLM down → fallback, rules still applied, alert if not matched as benign |
+| 10 | Notifications disabled → `held`, **state saved** |
+| 11 | Repeat while disabled → `dedup`, suppressed |
+
+---
+
+## 12. Target flow after the changes
+
+```mermaid
+flowchart TD
+  W[POST /ingest] --> C[claim_job]
+  C --> F[fetch_log]
+  F --> S[logtext.scan<br/>+ signature_line]
+  S --> K{clean run?}
+  K -->|yes| K1[low, no LLM] --> N
+  K -->|no| G[_fingerprint = service + normalise error]
+  G --> D{same signature for this service<br/>within dedup_window_hours?}
+  D -->|yes| D1[_duplicate_verdict<br/>duplicate_of, occurrence+1<br/>NO LLM] --> N
+  D -->|no| R[rules.for_service]
+  R --> U[signature_seen in 30d?]
+  U --> P[build_prompt<br/>JOB + PREVIOUS_FAILURE + SERVICE_RULES + LOG]
+  P --> L{LLM}
+  L -->|ok| V[verdict]
+  L -->|down| FB[fallback_verdict]
+  V --> CL[_clean<br/>fixed rules → service rules → unknown floor → logic=critical]
+  FB --> CL
+  CL --> N[notifier.notify]
+  N --> T{≥ MIN_SEVERITY?}
+  T -->|no| NA[no_action + mark healthy]
+  T -->|yes| AD{_alert_decision}
+  AD -->|dedup| SU[suppressed: duplicate of #id, occurrence N]
+  AD -->|new failure / new signature / severity rose / reminder| EM[email → notified]
+  AD -->|same signature, recent| SU2[suppressed + reason]
+  NA --> DONE[complete_job]
+  SU --> DONE
+  SU2 --> DONE
+  EM --> DONE
+```
+
+---
+
+## 13. Delivery plan, acceptance criteria, risks, open questions
+
+### 13.1 Suggested PR split
+
+| PR | Contents | Depends on |
+|---|---|---|
+| **PR 0** | `.env`: `AGENT_SKIP_CLEAN_RUNS=true`; add `pyyaml` to requirements | — |
+| **PR 1** (noise + missed-alert fix) | Step 1 (signature), Step 2 (24h check before the LLM + columns), Step 3 (notifier order, held-path state) + tests for these | PR 0 |
+| **PR 2** (hybrid severity) | Step 4 (YAML + `rules.py` + prompt + `_clean` enforcement), Step 5 (category) + tests. Start with FAR and CMPP rules. | PR 1 |
+| **PR 3** (measurement) | Step 6 (labels API + evaluate script), optional dashboard buttons | PR 1 |
+| **Later phase** | Classification model trained on reviewed labels (Aditya: "not now") | PR 3 + enough labels |
+
+### 13.2 Acceptance criteria
+
+1. The same service and the same normalised error within 24h produce **no LLM call and no email**, and the incident records `duplicate_of` and `occurrence`.
+2. A **different** error in a service that is already failing emails **immediately**, not after 120 min.
+3. FAR's known share-access error is **≤ medium** and not emailed; the same error in software provisioning is **critical** and emailed.
+4. A never-seen error with no matching rule is **≥ high**.
+5. A logic error ("processed but notes not updated") is **critical**.
+6. Every verdict stores `matched_rule`, `category`, and why it was adjusted (`_adjusted` in the verdict JSON).
+7. With notifications off, `event_state` still tracks failures.
+8. Clean runs don't call the LLM.
+9. All 11 scenarios in `test_pipeline.py` pass.
+10. `evaluate.py` reports accuracy per service; the target is > 95% on labelled data.
+
+### 13.3 Risks and mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Normalisation too aggressive (different errors → same signature) | A real new error is treated as a duplicate and never emailed | Normalise only volatile parts; unit-test against real CMPP/FAR lines; include the exception type in the signature |
+| Normalisation too weak (same error → different signatures) | Noise remains | Measure distinct signatures per service against distinct real causes on historic logs |
+| A `not_severe` rule too broad | A real outage is capped at medium | Narrow regexes, review each rule, and a per-service `max_severity` rather than a blanket "never email" |
+| A rule overriding the platform-failure raise | A real crash hidden by a benign-looking line | Match only the signature/evidence lines, never the whole log; keep "automation never started" non-overridable |
+| The rule file becomes stale | Accuracy drifts | Owner per service; review monthly with the labels report |
+| A duplicate hides a severity increase | Escalation missed | The duplicate check is by signature; a different error line produces a different signature and goes through the full path |
+| The 30-day "seen before" check treats everything as new at first | Short burst of high alerts after deploy | Backfill: recompute fingerprints for historic incidents from stored verdict evidence, or start with `unknown_floor: medium` for the first week |
+
+### 13.4 Open questions to agree with Aditya / team
+
+1. **Priority when rules conflict:** may a `not_severe` rule lower a verdict that was raised because xyOps reported a failure (exit code ≠ 0)? It must, for FAR noise to drop. **Proposed: yes, except when the automation never started.**
+2. **Dedup window per service:** is a single 24h window right, or should it vary by service (e.g. CMPP runs every 15 minutes)?
+3. **Should duplicates count on the ticket dashboard?** Proposed: yes (IDs taken from the log).
+4. **Who owns the rule file for each service**, and how are changes reviewed?
+5. **Service name matching:** `event_title` values differ between dev and prod (e.g. "Server Workstation Prestage - Dev"). Match on `event_id`, or support regex/prefix matching?
+6. **Reminder policy:** keep the 12h "still failing" reminder for a duplicate that repeats for days, or send a daily digest?
+7. **Labelling workflow:** who labels, how often, and what's the minimum per service before accuracy numbers are trusted?
+
+---
+
+## 14. Appendix: running, testing, baseline data
+
+### 14.1 Run locally
+
+```powershell
+# Terminal 1 - ingest service (port 8090)
+.\.venv\Scripts\Activate.ps1
+python -m agentIngest.app
+
+# Terminal 2 - dashboard (port 5173)
+cd frontend
+npm run dev
+# open http://localhost:5173/tickets
+```
+
+Needs `INGEST_TOKEN` in the root `.env`; the Vite proxy adds it to the ticket API calls.
+
+### 14.2 Smoke test
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://localhost:8090/health
+Invoke-WebRequest -UseBasicParsing http://localhost:5173/api/tickets/stats
+```
+
+### 14.3 Batch / recovery mode
+
+```powershell
+python -m agentIngest.agent.runner            # one cycle, prints the summary
+python -m agentIngest.agent.runner --loop     # forever, every AGENT_INTERVAL_SECONDS
+```
+
+### 14.4 Useful read-only queries
+
+```sql
+-- Outcome per service
+SELECT COALESCE(event_title,'?') app, status, COUNT(*) FROM incidents GROUP BY 1,2 ORDER BY 1,2;
+
+-- Why things were suppressed
+SELECT event_title, notify_error, COUNT(*) FROM incidents
+ WHERE status = 'suppressed' GROUP BY 1,2 ORDER BY 3 DESC;
+
+-- Current service health
+SELECT event_id, state, severity, consecutive_failures,
+       datetime(first_failed_at,'unixepoch') since
+  FROM event_state ORDER BY state DESC, consecutive_failures DESC;
+
+-- How varied the LLM's wording is (why it can't be a duplicate key)
+SELECT event_title, COUNT(DISTINCT root_cause) causes, COUNT(*) incidents
+  FROM incidents WHERE severity IN ('high','critical')
+   AND created_at > strftime('%s','now') - 7*86400
+ GROUP BY 1;
+```
+
+### 14.5 Git state at time of writing
+
+| Ref | Commit | Content |
+|---|---|---|
+| `origin/feat/agent_integration` | `732d1f1` | Per-app ticket dashboard + `/api/tickets*` read APIs (pushed) |
+| | `0c5f9a4` | Fix ticket count issue (Yogesh) |
+| | `dede814` | Add fix to reduce noise: `event_state`, `_alert_decision` (Yogesh) |
+| | `ec813f8` | Add sender info in mail client (Yogesh) |
+| `backup/ticket-dashboard-full` | `710c1e3` | Earlier full version incl. `/api/tickets/{ticket}`, `/api/stats`, CORS, work-item columns |
+
+### 14.6 Glossary
+
+| Term | Meaning |
+|---|---|
+| **Event / service** | An xyOps scheduled automation (FAR, CMPP, …), identified by `event_id` / `event_title` |
+| **Job** | One execution of an event, identified by `job_id` |
+| **Incident** | The agent's stored verdict for one job |
+| **Verdict** | JSON produced by the LLM (or fallback) and then checked by `_clean` |
+| **Fingerprint / signature** | Hash used to recognise a repeat of the same failure |
+| **Suppressed** | Recorded but deliberately not emailed, with the reason stored |
+| **Held** | Would have emailed, but notifications are disabled or there are no recipients |
+| **Dedup** | Duplicate detection: recognising a repeat so it isn't re-analysed or re-emailed |
+| **Anti-flap** | Cooldown that stops alternating states from sending repeated emails |
+| **Hybrid severity** | Fixed rules + per-service rule file + LLM with context, rather than the LLM alone |
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/powershell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  const root = document.documentElement;
+  const content = document.getElementById('content');
+  const source = document.getElementById('md').textContent;
+
+  const saved = localStorage.getItem('xyops-doc-theme');
+  if (saved) root.dataset.theme = saved;
+
+  if (!window.marked) {
+    content.innerHTML = '<div class="fallback">The Markdown renderer could not be loaded from the CDN. Showing the raw document instead.</div><pre class="raw"></pre>';
+    content.querySelector('pre').textContent = source;
+    return;
+  }
+
+  marked.setOptions({ gfm: true, breaks: false });
+  content.innerHTML = marked.parse(source);
+
+  // GitHub-style slugs so the document's own #anchors keep working.
+  const slug = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s/g, '-');
+  content.querySelectorAll('h1, h2, h3, h4').forEach((h) => { h.id = slug(h.textContent); });
+
+  // Hero: title + lead blockquote.
+  const h1 = content.querySelector('h1');
+  if (h1) { document.getElementById('hero-title').textContent = h1.textContent; h1.remove(); }
+  const lead = content.querySelector('blockquote');
+  if (lead) { document.getElementById('hero-sub').innerHTML = lead.innerHTML; lead.remove(); }
+
+  // TOC entries captured before headings are decorated.
+  const tocItems = [...content.querySelectorAll('h2, h3')].map((h) => ({ level: h.tagName, id: h.id, text: h.textContent }));
+
+  // Wrap every h2 and what follows it in a card.
+  const frag = document.createDocumentFragment();
+  let section = null;
+  [...content.childNodes].forEach((node) => {
+    if (node.nodeName === 'HR') return;
+    if (node.nodeName === 'H2') {
+      section = document.createElement('section');
+      section.className = 'card';
+      if (/^contents$/i.test(node.textContent.trim())) section.classList.add('contents');
+      frag.appendChild(section);
+    }
+    (section || frag).appendChild(node);
+  });
+  content.innerHTML = '';
+  content.appendChild(frag);
+
+  content.querySelectorAll('h2').forEach((h) => {
+    const m = /^(\d+)\.\s+(.*)$/.exec(h.textContent);
+    if (m) h.innerHTML = `<span class="num">${m[1]}</span><span>${h.innerHTML.replace(/^\d+\.\s+/, '')}</span>`;
+  });
+
+  // Status counts straight from the tables, so the hero never disagrees with the body.
+  const sectionFor = (prefix) => content.querySelector(`h2[id^="${prefix}"]`)?.closest('section');
+  const countColumn = (table, col) => {
+    const c = { ok: 0, warn: 0, bad: 0, total: 0 };
+    if (!table) return c;
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      const cell = tr.children[col < 0 ? tr.children.length + col : col];
+      const t = (cell?.textContent || '').trim();
+      c.total++;
+      if (t.startsWith('✅')) c.ok++; else if (t.startsWith('⚠')) c.warn++; else if (t.startsWith('❌')) c.bad++;
+    });
+    return c;
+  };
+  const matrix = countColumn(sectionFor('9-')?.querySelector('table'), 2);
+  const scenarios = countColumn(sectionFor('10-')?.querySelector('table'), -1);
+  const entryPoints = sectionFor('3-')?.querySelectorAll('table')[0]?.querySelectorAll('tbody tr').length || 0;
+
+  const stats = [
+    { cls: 'ok', label: 'Implemented', value: matrix.ok, hint: `of ${matrix.total} requirements` },
+    { cls: 'warn', label: 'Partial', value: matrix.warn, hint: 'needs finishing' },
+    { cls: 'bad', label: 'To build', value: matrix.bad, hint: 'missing or bug risk' },
+    { cls: 'info', label: 'E2E scenarios passing', value: `${scenarios.ok}/${scenarios.total}`, hint: `${scenarios.warn} partial · ${scenarios.bad} failing` },
+    { cls: '', label: 'Entry points', value: entryPoints, hint: 'webhook, sweep, CLI, APIs, UI' },
+  ];
+  document.getElementById('stats').innerHTML = stats.map((s) =>
+    `<div class="stat ${s.cls}"><div class="label">${s.label}</div><div class="value" data-to="${s.value}">${s.value}</div><div class="hint">${s.hint}</div></div>`
+  ).join('');
+  const pct = (n) => (matrix.total ? (n / matrix.total) * 100 : 0);
+  const meter = document.getElementById('meter').children;
+  requestAnimationFrame(() => setTimeout(() => {
+    meter[0].style.width = pct(matrix.ok) + '%';
+    meter[1].style.width = pct(matrix.warn) + '%';
+    meter[2].style.width = pct(matrix.bad) + '%';
+  }, 150));
+  document.getElementById('meter-legend').innerHTML =
+    `<span><i style="background:var(--ok)"></i>Implemented ${Math.round(pct(matrix.ok))}%</span>` +
+    `<span><i style="background:var(--warn)"></i>Partial ${Math.round(pct(matrix.warn))}%</span>` +
+    `<span><i style="background:var(--bad)"></i>To build ${Math.round(pct(matrix.bad))}%</span>`;
+
+  // Count-up animation for numeric stats.
+  document.querySelectorAll('.stat .value').forEach((el) => {
+    const to = el.dataset.to;
+    if (!/^\d+$/.test(to)) return;
+    const end = +to; let n = 0; const step = Math.max(1, Math.ceil(end / 20));
+    el.textContent = '0';
+    const tick = () => { n = Math.min(end, n + step); el.textContent = n; if (n < end) requestAnimationFrame(tick); };
+    setTimeout(tick, 250);
+  });
+
+  // Tables: scroll wrapper + status pills + row accents.
+  content.querySelectorAll('table').forEach((t) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    t.replaceWith(wrap);
+    wrap.appendChild(t);
+  });
+  const kinds = [['✅', 'ok'], ['⚠', 'warn'], ['❌', 'bad']];
+  content.querySelectorAll('tbody td').forEach((td) => {
+    const t = td.textContent.trim();
+    const kind = kinds.find(([e]) => t.startsWith(e));
+    if (!kind) return;
+    td.innerHTML = t.length <= 48
+      ? `<span class="pill ${kind[1]}">${td.innerHTML}</span>`
+      : td.innerHTML.replace(/^(\s*)(✅|⚠️?|❌)/u, `$1<span class="pill ${kind[1]}">$2</span>`);
+    td.parentElement.classList.add('row-' + kind[1]);
+  });
+
+  // Callouts.
+  content.querySelectorAll('blockquote').forEach((bq) => {
+    const t = bq.textContent.trim();
+    if (t.startsWith('⚠')) bq.classList.add('warn');
+    else if (/proposed|not yet implemented/i.test(t)) bq.classList.add('proposed');
+  });
+
+  // Mermaid blocks -> diagram containers (before highlighting touches them).
+  content.querySelectorAll('pre > code.language-mermaid').forEach((code) => {
+    const box = document.createElement('div');
+    box.className = 'diagram';
+    const kind = (code.textContent.trim().split(/\s/)[0] || 'diagram').replace('stateDiagram-v2', 'state');
+    box.innerHTML = `<span class="tag">${kind}</span><button class="btn expand" title="Open full size">⤢ Expand</button>`;
+    const m = document.createElement('div');
+    m.className = 'mermaid';
+    m.dataset.src = code.textContent;
+    m.textContent = code.textContent;
+    box.appendChild(m);
+    code.parentElement.replaceWith(box);
+  });
+
+  // Code blocks: highlight + chrome.
+  const alias = { dotenv: 'ini', text: 'plaintext', ts: 'typescript', sh: 'bash', ps1: 'powershell' };
+  if (window.hljs) hljs.configure({ ignoreUnescapedHTML: true });
+  content.querySelectorAll('pre > code').forEach((code) => {
+    const m = /language-(\S+)/.exec(code.className);
+    const lang = m ? m[1] : 'text';
+    const hl = alias[lang] || lang;
+    if (window.hljs) {
+      if (hljs.getLanguage(hl)) { code.className = 'language-' + hl; hljs.highlightElement(code); }
+      else code.classList.add('hljs');
+    }
+    const pre = code.parentElement;
+    const lines = code.textContent.replace(/\n$/, '').split('\n').length;
+    const block = document.createElement('div');
+    block.className = 'code-block';
+    block.innerHTML =
+      `<div class="code-head"><span class="dots"><i></i><i></i><i></i></span>` +
+      `<span class="lang">${lang}</span><span class="lines">${lines} lines</span><span class="spacer"></span>` +
+      (lines > 26 ? '<button class="toggle">Expand</button>' : '') +
+      `<button class="copy">Copy</button></div>`;
+    pre.replaceWith(block);
+    block.appendChild(pre);
+    if (lines > 26) block.classList.add('collapsed');
+  });
+  content.addEventListener('click', (e) => {
+    const copy = e.target.closest('.copy');
+    if (copy) {
+      const text = copy.closest('.code-block').querySelector('code').textContent;
+      navigator.clipboard?.writeText(text).then(() => {
+        copy.textContent = 'Copied ✓';
+        setTimeout(() => (copy.textContent = 'Copy'), 1400);
+      });
+    }
+    const toggle = e.target.closest('.toggle');
+    if (toggle) {
+      const block = toggle.closest('.code-block');
+      block.classList.toggle('collapsed');
+      toggle.textContent = block.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+    }
+    const expand = e.target.closest('.diagram .expand');
+    if (expand) {
+      const svg = expand.closest('.diagram').querySelector('svg');
+      if (!svg) return;
+      const frame = document.getElementById('overlay-frame');
+      frame.innerHTML = '';
+      frame.appendChild(svg.cloneNode(true));
+      document.getElementById('overlay').classList.add('open');
+    }
+  });
+  const overlay = document.getElementById('overlay');
+  const closeOverlay = () => overlay.classList.remove('open');
+  document.getElementById('overlay-close').onclick = closeOverlay;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOverlay(); });
+
+  let allOpen = false;
+  document.getElementById('expand-all').onclick = (e) => {
+    allOpen = !allOpen;
+    content.querySelectorAll('.code-block').forEach((b) => {
+      const t = b.querySelector('.toggle');
+      if (!t) return;
+      b.classList.toggle('collapsed', !allOpen);
+      t.textContent = allOpen ? 'Collapse' : 'Expand';
+    });
+    e.currentTarget.textContent = allOpen ? 'Collapse code' : 'Expand code';
+  };
+  document.getElementById('print').onclick = () => {
+    content.querySelectorAll('section.card').forEach((s) => s.classList.add('visible'));
+    window.print();
+  };
+
+  // Mermaid, re-rendered on theme change.
+  const renderMermaid = () => {
+    if (!window.mermaid) return;
+    const dark = root.dataset.theme !== 'light';
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      fontFamily: '"Segoe UI", Inter, system-ui, sans-serif',
+      flowchart: { curve: 'basis', htmlLabels: true, padding: 14 },
+      sequence: { mirrorActors: false, actorMargin: 60 },
+      themeVariables: dark ? {
+        darkMode: true, background: '#0c1226', primaryColor: '#1b1f4a', primaryTextColor: '#e6e9f5',
+        primaryBorderColor: '#7c5cff', lineColor: '#7fe7ff', secondaryColor: '#12324a', tertiaryColor: '#161b3a',
+        noteBkgColor: '#2a2160', noteTextColor: '#e6e9f5', actorBkg: '#1b1f4a', actorTextColor: '#e6e9f5',
+        actorBorder: '#7c5cff', signalColor: '#7fe7ff', signalTextColor: '#e6e9f5', labelBoxBkgColor: '#1b1f4a',
+        edgeLabelBackground: '#0c1226', clusterBkg: 'rgba(124,92,255,0.08)', clusterBorder: '#7c5cff',
+      } : {
+        primaryColor: '#eef0ff', primaryTextColor: '#141a33', primaryBorderColor: '#6d5dfc', lineColor: '#0891b2',
+        secondaryColor: '#e0f7fb', tertiaryColor: '#f5f7fc', edgeLabelBackground: '#ffffff',
+        clusterBkg: 'rgba(109,93,252,0.06)', clusterBorder: '#6d5dfc',
+      },
+    });
+    const nodes = [...document.querySelectorAll('.mermaid')];
+    nodes.forEach((el) => { el.removeAttribute('data-processed'); el.innerHTML = ''; el.textContent = el.dataset.src; });
+    mermaid.run({ nodes }).catch((err) => console.error('mermaid', err));
+  };
+  renderMermaid();
+
+  const themeBtn = document.getElementById('theme');
+  const syncTheme = () => {
+    const dark = root.dataset.theme !== 'light';
+    themeBtn.textContent = dark ? '☀ Light' : '☾ Dark';
+    document.getElementById('hljs-theme').href =
+      `https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/${dark ? 'github-dark' : 'github'}.min.css`;
+  };
+  syncTheme();
+  themeBtn.onclick = () => {
+    root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('xyops-doc-theme', root.dataset.theme);
+    syncTheme();
+    renderMermaid();
+  };
+
+  // Sidebar TOC with scroll-spy and filter.
+  const toc = document.getElementById('toc');
+  let group = null;
+  tocItems.forEach((item) => {
+    const a = document.createElement('a');
+    a.href = '#' + item.id;
+    a.textContent = item.text;
+    a.className = item.level === 'H2' ? 'h2' : 'h3';
+    a.dataset.id = item.id;
+    if (item.level === 'H2') {
+      toc.appendChild(a);
+      group = document.createElement('div');
+      group.className = 'group';
+      group.dataset.parent = item.id;
+      toc.appendChild(group);
+    } else (group || toc).appendChild(a);
+  });
+  const links = new Map([...toc.querySelectorAll('a')].map((a) => [a.dataset.id, a]));
+  const setActive = (id) => {
+    toc.querySelectorAll('a.active').forEach((a) => a.classList.remove('active'));
+    const a = links.get(id);
+    if (!a) return;
+    a.classList.add('active');
+    toc.querySelectorAll('.group.open').forEach((g) => g.classList.remove('open'));
+    const g = a.classList.contains('h3') ? a.parentElement : a.nextElementSibling;
+    if (g && g.classList.contains('group')) g.classList.add('open');
+    const box = a.closest('aside');
+    const r = a.getBoundingClientRect(), br = box.getBoundingClientRect();
+    if (r.top < br.top || r.bottom > br.bottom) a.scrollIntoView({ block: 'nearest' });
+  };
+  const heads = [...content.querySelectorAll('h2, h3')];
+  const spy = () => {
+    let current = heads[0]?.id;
+    for (const h of heads) { if (h.getBoundingClientRect().top < 120) current = h.id; else break; }
+    setActive(current);
+  };
+  document.getElementById('toc-filter').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    toc.classList.toggle('filtering', !!q);
+    toc.querySelectorAll('a').forEach((a) => a.classList.toggle('hidden', !!q && !a.textContent.toLowerCase().includes(q)));
+  });
+
+  // Reveal-on-scroll, progress bar, back-to-top.
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+    if (en.isIntersecting) { en.target.classList.add('visible'); io.unobserve(en.target); }
+  }), { rootMargin: '0px 0px -8% 0px' });
+  content.querySelectorAll('section.card').forEach((s) => io.observe(s));
+  const progress = document.getElementById('progress');
+  const top = document.getElementById('top');
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.width = (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+    top.classList.toggle('show', scrollY > 800);
+    spy();
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  top.onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+  onScroll();
+  if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+})();
+</script>
+</body>
+</html>
